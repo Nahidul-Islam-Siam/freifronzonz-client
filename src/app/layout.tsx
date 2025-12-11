@@ -1,3 +1,5 @@
+// app/layout.tsx
+
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton/ScrollToTopButton";
 import { NextUiProvider } from "@/lib/providers/NextUIProvider";
 import ReduxProvider from "@/redux/ReduxProvider";
@@ -19,8 +21,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "LUMICA",
-  description:
-    "LUMICA - An Education Platform for Students and Teachers",
+  description: "LUMICA - An Education Platform for Students and Teachers",
 };
 
 export default function RootLayout({
@@ -30,10 +31,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head></head>
       <body
         suppressHydrationWarning={true}
-        className={`${inter.variable} antialiased !bg-white`}
+        className={`${inter.variable} antialiased`}
+        // 🔴 REMOVED !bg-white — it was hiding your background image
       >
         <NextUiProvider>
           <ReduxProvider>
@@ -45,9 +46,8 @@ export default function RootLayout({
                   colorSuccess: "#3ECF8E",
                   colorWarning: "#FAAD14",
                   colorError: "#FF6B6B",
-
                   colorTextBase: "#1F1F1F",
-                  colorBgBase: "#FFFFFF",
+                  colorBgBase: "transparent", // ← Make AntD base bg transparent
                   borderRadius: 8,
                   fontSize: 15,
                   lineHeight: 1.6,
@@ -58,24 +58,25 @@ export default function RootLayout({
                     colorPrimary: "#0BA8CC",
                     colorPrimaryHover: "#0aa0bd",
                     colorPrimaryActive: "#088aa3",
-
                     colorSuccess: "#3ECF8E",
                     colorSuccessHover: "#36b87d",
                     colorSuccessActive: "#2fa36e",
-
                     colorWarning: "#FAAD14",
                     colorWarningHover: "#e89c0f",
                     colorWarningActive: "#c27e0d",
-
                     colorError: "#FF6B6B",
                     colorErrorHover: "#e95e5e",
                     colorErrorActive: "#c94d4d",
+                  },
+                  Layout: {
+                    colorBgLayout: "transparent", // ← Prevent AntD layout from adding white bg
                   },
                 },
               }}
             >
               <>
-                <div className="min-h-screen grid grid-rows-[auto_1fr_auto] text-title max-w-[100vw] overflow-hidden">
+                {/* Main content wrapper — transparent to show body bg */}
+                <div className="min-h-screen grid grid-rows-[auto_1fr_auto] text-title max-w-[100vw] overflow-hidden bg-transparent">
                   {children}
                 </div>
                 <ScrollToTopButton />

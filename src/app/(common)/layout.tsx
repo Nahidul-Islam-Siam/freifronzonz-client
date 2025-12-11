@@ -1,5 +1,8 @@
-// import Footer from "@/components/shared/Footer/Footer";
-// import Navbar from "@/components/shared/Navbar/Navbar";
+
+
+
+import Footer from "@/components/shared/Footer/Footer";
+import Navbar from "@/components/shared/Navbar/Navbar";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton/ScrollToTopButton";
 import { NextUiProvider } from "@/lib/providers/NextUIProvider";
 import ReduxProvider from "@/redux/ReduxProvider";
@@ -22,12 +25,12 @@ export default function RootLayout({
         <ReduxProvider>
           <>
             <div className="min-h-screen grid grid-rows-[auto_1fr_auto] max-w-[100vw] overflow-hidden">
-              {/* <div className="fixed top-0 z-50 w-full">
+              <div className="fixed top-0 z-50 w-full">
                 <Navbar />
-              </div> */}
+              </div>
               <div className="min-h-[80vh]">{children}</div>
 
-              {/* <Footer /> */}
+              <Footer />
             </div>
             <ScrollToTopButton />
             <Toaster />

@@ -1,88 +1,113 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
 import { Mail } from "lucide-react";
+import Link from "next/link";
 import Image from "next/image";
 import logo from "@/assets/logo/logo.png";
-import Link from "next/link";
 
-const ForgetPassword = () => {
+const ForgetPassWord = () => {
   const [email, setEmail] = useState("");
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50 font-normal flex items-center justify-center text-[#4E4E4A] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-      {/* Main Card */}
-      <div className="w-full max-w-md bg-white rounded-lg p-10 shadow-sm">
-        {/* Logo/Brand */}
-        <div className="flex justify-center mb-6">
-          <Image src={logo} alt="Logo" width={100} height={100} />
-        </div>
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* Header with Logo */}
+      <header className="text-center py-8">
+        <Link href="/">
+          <Image
+            src={logo}
+            alt="Ops.wine Logo"
+            width={150}
+            height={60}
+            className="mx-auto"
+          />
+        </Link>
+      </header>
 
-        {/* Heading */}
-        <div className="mb-6">
-          <h2 className="text-xl md:text-2xl font-normal mb-2">
-            Forgot Your Password?
-          </h2>
-          <p className="text-sm md:text-base text-[#6B7280]">
-            Enter your email address to receive a reset link.
-          </p>
-        </div>
-
-        {/* Form */}
-        <form className="space-y-6">
-          {/* Email Field */}
-          <div>
-            <label className="block text-xs md:text-base text-[#6B7280] mb-3">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full pl-10 pr-4 py-2.5 text-[#848484] placeholder-gray-400 focus:outline-none focus:border-gray-300 transition-colors rounded-[14px] border border-[#E5E5E5]"
-              />
-            </div>
-          </div>
-
-          {/* Send Reset Link Button */}
-          <button
-            type="submit"
-            className="w-full py-2.5  bg-[#A7997D] text-white rounded-[16px] border-2 border-[#E5E5E5]
- hover:bg-[#9a8c75] transition-all duration-200"
-          >
-            Send Reset Link
-          </button>
-
-          {/* Back to Login Link */}
-          <div className="w-full text-sm md:text-base text-[#6B7280] py-2.5 border-2   rounded-[16px] hover:bg-[#9a8c75] transition-all duration-200 ">
+      {/* Main Content */}
+      <main className="flex flex-1">
+        {/* Left Side - Forgot Password Form */}
+        <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-8">
+          <div className="max-w-md w-full">
+            {/* Back to Login Link */}
             <Link
               href="/login"
-              className="flex items-center justify-center text-[#A7997D] md:text-base hover:text-white transition-colors"
+              className="flex items-center text-xs text-[#771A09] font-normal md:text-lg mb-4 hover:text-[#A7997D]"
             >
               <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  d="M15.75 18.75L9 12L15.75 5.25"
+                  stroke="#313131"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 />
               </svg>
-              Back to Login
+              Back to login
             </Link>
+
+            <h2 className="text-3xl md:text-4xl font-abhaya font-extrabold text-gray-800 mb-2">
+              Forgot your password?
+            </h2>
+            <p className="text-[#968F8F] text-sm mb-6">
+              Don&apos;t worry, happens to all of us. Enter your email below to
+              recover your password.
+            </p>
+
+            <form className="space-y-5">
+              {/* Email Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="email"
+                    placeholder="john.doe@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2.5 text-sm text-[#636364] placeholder:text-sm placeholder:text-[#636364]
+                      rounded-[6px] border border-black/25 bg-[rgba(196,196,196,0)]
+                      shadow-[0_4px_10px_0_rgba(0,0,0,0.25)] focus:outline-none focus:ring-1 focus:ring-[#A7997D]"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="w-full py-2.5 text-white md:text-[20px] text-lg 
+                  hover:bg-[#8d6a3f] transition-colors duration-200 font-medium 
+                  rounded-[6px] bg-[#AF6900] shadow-[0_4px_10px_0_rgba(233,68,75,0.25)]"
+              >
+                Submit
+              </button>
+            </form>
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Right Side - Illustration */}
+        <div className="hidden md:block w-1/2 p-14">
+          <div
+            className="h-full w-full rounded-lg shadow-lg bg-cover bg-center"
+            style={{
+              backgroundImage: "url('/f1.png')", // ← Use this image
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        </div>
+      </main>
     </div>
   );
 };
 
-export default ForgetPassword;
+export default ForgetPassWord;

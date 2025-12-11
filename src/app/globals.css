@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+/* app/globals.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;500;600;700;800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,24 +17,32 @@
   }
 }
 
-.custom-sidebar .ant-menu-item-selected {
-  background-color: #a7997d;
-  border-radius: 8px;
-  color: white;
+/* ✅ CRITICAL: Set background image on html AND body */
+html,
+body {
+  background: url('/bg.png') center/cover no-repeat fixed !important;
+  background-color: transparent !important;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--foreground);
 }
 
-.custom-sidebar .ant-menu-item-selected > a {
-  color: white !important;
+/* Override Ant Design defaults that add white backgrounds */
+.ant-layout,
+.ant-layout-content,
+.ant-card,
+.ant-modal-content,
+.ant-page-header {
+  background: transparent !important;
 }
 
+/* Font classes */
 .font-roboto {
   font-family: "Roboto", sans-serif;
 }
 
-body {
-  font-family: "Arial", sans-serif; /* direct use */
-  background: var(--background);
-  color: var(--foreground);
+.font-abhaya {
+  font-family: "Abhaya Libre", serif;
 }
 
 /* Remove number arrows */
@@ -64,7 +74,13 @@ input[type="number"] {
   background-clip: text;
 }
 
-/* <CHANGE> Custom calendar styling for react-calendar */
+@keyframes l21 {
+  100% {
+    background-position: left;
+  }
+}
+
+/* Calendar styling */
 .custom-calendar {
   width: 100%;
   max-width: 300px;
@@ -72,35 +88,15 @@ input[type="number"] {
   border: none;
   font-family: inherit;
 }
-
 .custom-calendar button {
   padding: 0.5rem;
   font-size: 0.875rem;
 }
-
 .custom-calendar button:hover {
   background-color: #fef3c7;
 }
-
-.custom-calendar button.react-calendar__tile--active {
-  background-color: #b45309;
-  color: white;
-}
-
+.custom-calendar button.react-calendar__tile--active,
 .custom-calendar button.react-calendar__tile--now {
   background-color: #b45309;
   color: white;
-}
-
-.custom-calendar__navigation {
-  margin-bottom: 1rem;
-}
-
-.custom-calendar__month-view__days__day {
-  padding: 0.5rem;
-}
-@keyframes l21 {
-  100% {
-    background-position: left;
-  }
 }

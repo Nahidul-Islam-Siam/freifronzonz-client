@@ -14,6 +14,7 @@ export default {
         inter: ["var(--font-inter)"],
         arial: ["Arial", "sans-serif"],
         roboto: ["Roboto", "sans-serif"],
+        abhaya: ["Abhaya Libre", "sans-serif"],
       },
       colors: {
         black: "#000",
