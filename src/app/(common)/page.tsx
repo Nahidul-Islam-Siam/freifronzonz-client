@@ -1,3 +1,4 @@
+import CategorYSection from '@/components/pages/cards/CategorySection'
 import HeroSection from '@/components/pages/home/HeroSection/HeroSection'
 import NewEventsSection from '@/components/pages/home/NewEventsSection'
 import OurStorySection from '@/components/pages/home/OurStorySection'
@@ -9,6 +10,7 @@ export default function page() {
       <HeroSection/>
       <OurStorySection/>
       <NewEventsSection/>
+      <CategorYSection/>
     </div>
   )
 }
