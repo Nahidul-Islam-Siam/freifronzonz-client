@@ -1,6 +1,6 @@
 /* app/globals.css */
 
-@import url('https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;500;600;700;800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;500;600;700;800&family=Marcellus&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,10 +17,16 @@
   }
 }
 
+.font-marcellus {
+  font-family: "Marcellus", serif;
+
+}
+
+
 /* ✅ CRITICAL: Set background image on html AND body */
 html,
 body {
-  background: url('/bg.png') center/cover no-repeat fixed !important;
+  background: url("/bg.png") center/cover no-repeat fixed !important;
   background-color: transparent !important;
   min-height: 100vh;
   margin: 0;
@@ -55,7 +61,6 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-
 /* Hide scrollbars */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -64,7 +69,6 @@ input[type="number"] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 
 /* Loader */
 .loader {

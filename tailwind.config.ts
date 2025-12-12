@@ -15,6 +15,7 @@ export default {
         arial: ["Arial", "sans-serif"],
         roboto: ["Roboto", "sans-serif"],
         abhaya: ["Abhaya Libre", "sans-serif"],
+        marcellus: ["Marcellus", "sans-serif"],
       },
       colors: {
         black: "#000",

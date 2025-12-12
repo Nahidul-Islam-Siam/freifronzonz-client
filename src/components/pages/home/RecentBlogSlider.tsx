@@ -87,7 +87,7 @@ export default function RecentBlogSlider() {
           </Swiper>
 
           {/* Custom Navigation Arrows */}
-       <div className="absolute top-1/2 -translate-y-1/2 left-2 sm:-left-20 z-10">
+       {/* <div className="absolute top-1/2 -translate-y-1/2 left-2 sm:-left-20 z-10">
             <button className="swiper-button-prev  w-10 h-10 flex items-center justify-center text-[#482817] hover:bg-gray-100 transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -102,9 +102,9 @@ export default function RecentBlogSlider() {
                 />
               </svg>
             </button>
-          </div>
+          </div> */}
 
-         <div className="absolute top-1/2 -translate-y-1/2 right-2 sm:-right-20 z-10">
+         {/* <div className="absolute top-1/2 -translate-y-1/2 right-2 sm:-right-20 z-10">
             <button className="swiper-button-next  w-10 h-10 flex items-center justify-center text-[#482817] hover:bg-gray-100 transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -119,7 +119,7 @@ export default function RecentBlogSlider() {
                 />
               </svg>
             </button>
-          </div>
+          </div> */}
 
           {/* Pagination Dots */}
           <div className="swiper-pagination flex justify-center mt-6 space-x-2"></div>
