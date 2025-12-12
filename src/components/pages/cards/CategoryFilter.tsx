@@ -8,22 +8,33 @@ interface CategoryFilterProps {
 
 export default function CategoryFilter({ categories, activeCategory, onCategoryChange }: CategoryFilterProps) {
   return (
-    <div className="border-b border-gray-300">
-      <div className="flex justify-center gap-8 pb-4 overflow-x-auto">
-        {categories.map((category) => (
-          <button
-            key={category}
-            onClick={() => onCategoryChange(category)}
-            className={`whitespace-nowrap text-sm font-medium transition-colors ${
-              activeCategory === category
-                ? "text-gray-900 border-b-2 border-gray-900 pb-2"
-                : "text-gray-600 hover:text-gray-900 pb-2"
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-    </div>
+<div className="border-b-1 border-[#968F8F]">
+  <div
+    className="
+      flex 
+      justify-start md:justify-center 
+      gap-4 md:gap-8 
+      pb-4 
+      overflow-x-auto 
+      px-4 
+      scrollbar-hide
+    "
+  >
+    {categories.map((category) => (
+      <button
+        key={category}
+        onClick={() => onCategoryChange(category)}
+        className={`whitespace-nowrap text-sm font-medium transition-colors ${
+          activeCategory === category
+            ? "text-[#968F8F] border-b-2 border-[#9E845C] pb-2"
+            : "text-[#968F8F] hover:text-gray-900 pb-2"
+        }`}
+      >
+        {category}
+      </button>
+    ))}
+  </div>
+</div>
+
   )
 }
