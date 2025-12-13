@@ -1,151 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState } from "react";
-
+import { useState, useEffect, useMemo } from "react";
 import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
 import Image from "next/image";
 import ProductCard from "../cards/ProductCard";
+import { products } from "../cards/CategorySection";
 
-interface Product {
-  id: number;
-  name: string;
-  image: string;
-  price: number;
-  originalPrice: number;
-  rating: number;
-  reviews: number;
-  description: string;
-  discount: string | null;
-  category: string;
-  bottleSize: string;
-  brand: string;
-}
-
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "Dolan Lorem 3 years Merlot Reserve Red Wine",
-    image: "/images/c1.png",
-    price: 89.99,
-    originalPrice: 50.0,
-    rating: 5,
-    reviews: 3,
-    description: "Premium red wine",
-    discount: "-44%",
-    category: "Red Wine",
-    bottleSize: "750ml",
-    brand: "VESEVO",
-  },
-  {
-    id: 2,
-    name: "Moet & Chandon Brut Imperial Champagne",
-    image: "/images/c1.png",
-    price: 120.0,
-    originalPrice: 150.0,
-    rating: 5,
-    reviews: 2,
-    description: "Luxury champagne",
-    discount: null,
-    category: "Champagne",
-    bottleSize: "750ml",
-    brand: "ARGENTINA",
-  },
-  {
-    id: 3,
-    name: "Perrier-Jouët Grand Brut Champagne",
-    image: "/images/c1.png",
-    price: 85.0,
-    originalPrice: 95.0,
-    rating: 5,
-    reviews: 3,
-    description: "Premium champagne",
-    discount: null,
-    category: "Champagne",
-    bottleSize: "750ml",
-    brand: "JACK DANIEL'S",
-  },
-  {
-    id: 4,
-    name: "Dolan Lorem 5 years Cabernet Reserve Red Wine",
-    image: "/images/c1.png",
-    price: 99.99,
-    originalPrice: 60.0,
-    rating: 5,
-    reviews: 3,
-    description: "Aged red wine",
-    discount: null,
-    category: "Red Wine",
-    bottleSize: "750ml",
-    brand: "BAREFOOT",
-  },
-  {
-    id: 5,
-    name: "Jack Daniel's Old No. 7 Tennessee Whiskey",
-    image: "/images/c1.png",
-    price: 45.0,
-    originalPrice: 55.0,
-    rating: 5,
-    reviews: 3,
-    description: "Classic whiskey",
-    discount: "-20%",
-    category: "Spirit Wine",
-    bottleSize: "1.5L",
-    brand: "JACK DANIEL'S",
-  },
-  {
-    id: 6,
-    name: "Hennessy VS Cognac with Gift Box",
-    image: "/images/c1.png",
-    price: 75.0,
-    originalPrice: 85.0,
-    rating: 5,
-    reviews: 3,
-    description: "Premium cognac",
-    discount: null,
-    category: "Spirit Wine",
-    bottleSize: "750ml",
-    brand: "JACK BOTTLE",
-  },
-  {
-    id: 7,
-    name: "Johnnie Walker Blue Label Scotch Whisky",
-    image: "/images/c1.png",
-    price: 199.99,
-    originalPrice: 220.0,
-    rating: 5,
-    reviews: 3,
-    description: "Luxury whisky",
-    discount: null,
-    category: "Spirit Wine",
-    bottleSize: "750ml",
-    brand: "VALDO",
-  },
-  {
-    id: 8,
-    name: "Château Margaux 2015 Bordeaux Red Wine",
-    image: "/images/c1.png",
-    price: 350.0,
-    originalPrice: 400.0,
-    rating: 5,
-    reviews: 3,
-    description: "Prestigious wine",
-    discount: null,
-    category: "Red Wine",
-    bottleSize: "750ml",
-    brand: "VESEVO",
-  },
-];
-
-const CATEGORIES = [
-  "Champagne",
-  "White Wine",
-  "Red Wine",
-  "Rosé Wine",
-  "Spirit Wine",
-];
-
-const BOTTLE_SIZES = ["150ml", "375ml", "750ml", "1.5L"];
+const BOTTLE_SIZES = ["150ml", "375ml", "750ml", "1.5L", "3L"];
 
 const BRANDS = [
   { name: "VESEVO", logo: "/images/brand-1.png" },
@@ -158,36 +20,70 @@ const BRANDS = [
 
 export default function ShopPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([40, 400]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [selectedBottleSizes, setSelectedBottleSizes] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("best-offer");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const itemsPerPage = 12;
-
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  // Simulate categories
-  const categories = [
-    { id: "red-wine", name: "Red Wine", checked: true },
-    { id: "white-wine", name: "White Wine", checked: false },
-    { id: "rose-wine", name: "Rosé Wine", checked: false },
-    { id: "sparkling", name: "Sparkling", checked: false },
-  ];
+  const itemsPerPage = 12;
 
-  const toggleDropdown = (dropdown: string) => {
-    setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
+  const normalizeCategory = (cat: string): string => {
+    return cat.toLowerCase().replace(/\s+/g, "-");
   };
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
+  const CATEGORY_METADATA = [
+    { id: "red-wine", name: "Red Wine" },
+    { id: "white-wine", name: "White Wine" },
+    { id: "rose-wine", name: "Rosé Wine" },
+    { id: "champagne", name: "Champagne" },
+    { id: "sparkling", name: "Sparkling" },
+    { id: "spirit-wine", name: "Spirit Wine" },
+  ];
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      "red-wine": 0,
+      "white-wine": 0,
+      "rose-wine": 0,
+      "champagne": 0,
+      "sparkling": 0,
+      "spirit-wine": 0,
+    };
+
+    products.forEach((product) => {
+      const norm = normalizeCategory(product.category);
+      if (counts[norm] !== undefined) {
+        counts[norm]++;
+      }
+    });
+
+    return counts;
+  }, []);
+
+  const CATEGORIES = useMemo(() => {
+    return [
+      { id: "all", name: "All Categories", count: products.length },
+      ...CATEGORY_METADATA.map((meta) => ({
+        ...meta,
+        count: categoryCounts[meta.id],
+      })),
+    ];
+  }, [categoryCounts]);
+
+  const toggleCategory = (categoryId: string) => {
+    if (categoryId === "all") {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories((prev) =>
+        prev.includes(categoryId)
+          ? prev.filter((id) => id !== categoryId)
+          : [...prev, categoryId]
+      );
+    }
   };
 
   const toggleBottleSize = (size: string) => {
@@ -202,133 +98,150 @@ export default function ShopPage() {
     );
   };
 
-  const filteredProducts = MOCK_PRODUCTS.filter((product) => {
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes(product.category);
+  const toggleDropdown = (dropdown: string) => {
+    setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      !searchQuery ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesPrice =
       product.originalPrice >= priceRange[0] &&
       product.originalPrice <= priceRange[1];
+
+    const productCategoryNormalized = normalizeCategory(product.category);
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(productCategoryNormalized);
+
     const matchesBottleSize =
       selectedBottleSizes.length === 0 ||
       selectedBottleSizes.includes(product.bottleSize);
+
     const matchesBrand =
       selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-    const matchesSearch =
-      searchQuery === "" ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     return (
-      matchesCategory &&
+      matchesSearch &&
       matchesPrice &&
+      matchesCategory &&
       matchesBottleSize &&
-      matchesBrand &&
-      matchesSearch
+      matchesBrand
     );
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "price-low":
-        return a.originalPrice - b.originalPrice;
-      case "price-high":
-        return b.originalPrice - a.originalPrice;
-      case "wishlist":
-        return b.rating - a.rating;
-      default:
-        return 0;
+    if (sortBy === "price-low") return a.originalPrice - b.originalPrice;
+    if (sortBy === "price-high") return b.originalPrice - a.originalPrice;
+    if (sortBy === "wishlist") return b.rating - a.rating;
+    if (sortBy === "best-offer") {
+      const aHasDiscount = a.discount !== null;
+      const bHasDiscount = b.discount !== null;
+      if (aHasDiscount && !bHasDiscount) return -1;
+      if (!aHasDiscount && bHasDiscount) return 1;
+      return b.originalPrice - a.originalPrice;
     }
+    return 0;
   });
 
-  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = sortedProducts.slice(
-    startIndex,
-    startIndex + itemsPerPage
+  const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategories, priceRange, selectedBottleSizes, selectedBrands, searchQuery, sortBy]);
+
+  // Reusable Price Filter Component
+  const PriceFilter = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className={isMobile ? "bg-gray-50 p-4 rounded-lg" : ""}>
+      <h3 className="font-bold text-[#482817] mb-4">Price</h3>
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={0}
+            max={500}
+            step={10}
+            value={priceRange[0]}
+            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400"
+          />
+          <input
+            type="range"
+            min={0}
+            max={500}
+            step={10}
+            value={priceRange[1]}
+            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+            className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400 ${
+              isMobile ? "mt-2" : ""
+            }`}
+          />
+        </div>
+      </div>
+      <div className="text-sm text-gray-600">
+        <span>Range: </span>
+        <span className="font-medium">${priceRange[0]} – ${priceRange[1]}</span>
+      </div>
+    </div>
   );
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
+        {/* Mobile Filter Button */}
         <div className="lg:hidden mb-4">
           <button
             onClick={() => setMobileFiltersOpen(true)}
             className="w-full bg-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
           >
             <SlidersHorizontal className="w-5 h-5 text-gray-600" />
-            <span className="font-medium text-gray-700">
-              Filters & Categories
-            </span>
+            <span className="font-medium text-gray-700">Filters & Categories</span>
           </button>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Desktop Filters (Sidebar) */}
           <aside className="hidden lg:block lg:w-64 space-y-6">
+            {/* Categories */}
             <div className="">
               <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
                 Categories
               </h3>
-              <div className="space-y-3">
+              <div className="">
                 {CATEGORIES.map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={category}
-                      checked={selectedCategories.includes(category)}
-                      onChange={() => toggleCategory(category)}
-                      className="w-4 h-4 text-orange-400 border-gray-300 rounded focus:ring-orange-400 cursor-pointer"
-                    />
-                    <label
-                      htmlFor={category}
-                      className="text-sm text-gray-700 cursor-pointer"
-                    >
-                      {category}
-                    </label>
+                  <div
+                    key={category.id}
+                    className={`flex items-center justify-between py-2 px-3 rounded-lg transition-colors cursor-pointer ${
+                      category.id === "all"
+                        ? selectedCategories.length === 0
+                          ? "bg-orange-100 text-orange-800"
+                          : "hover:bg-gray-50"
+                        : selectedCategories.includes(category.id)
+                        ? "bg-orange-50 border-l-4 border-orange-400"
+                        : "hover:bg-gray-50"
+                    }`}
+                    onClick={() => toggleCategory(category.id)}
+                  >
+                    <span className="text-sm md:text-base font-normal text-[#968F8F]">
+                      {category.name}
+                    </span>
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-sm text-[#968F8F]">
+                      {category.count}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="">
-              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
-                Price
-              </h3>
-              <div className="mb-4">
-                <input
-                  type="range"
-                  min={40}
-                  max={400}
-                  step={10}
-                  value={priceRange[0]}
-                  onChange={(e) =>
-                    setPriceRange([
-                      Number.parseInt(e.target.value),
-                      priceRange[1],
-                    ])
-                  }
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400"
-                />
-                <input
-                  type="range"
-                  min={40}
-                  max={400}
-                  step={10}
-                  value={priceRange[1]}
-                  onChange={(e) =>
-                    setPriceRange([
-                      priceRange[0],
-                      Number.parseInt(e.target.value),
-                    ])
-                  }
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400 mt-2"
-                />
-              </div>
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>${priceRange[0]}</span>
-                <span>${priceRange[1]}</span>
-              </div>
-            </div>
+            {/* Price */}
+            <PriceFilter />
 
+            {/* Bottle Sizes */}
             <div className="">
               <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
                 Bottle Sizes
@@ -341,7 +254,7 @@ export default function ShopPage() {
                     className={`px-2 py-4 text-xs rounded border transition-colors ${
                       selectedBottleSizes.includes(size)
                         ? "bg-orange-400 text-white border-orange-400"
-                        : " text-gray-700 border-gray-300 hover:border-orange-300"
+                        : "text-gray-700 border-gray-300 hover:border-orange-300"
                     }`}
                   >
                     {size}
@@ -350,6 +263,7 @@ export default function ShopPage() {
               </div>
             </div>
 
+            {/* Brands */}
             <div className=" ">
               <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
                 Select Brands
@@ -359,14 +273,14 @@ export default function ShopPage() {
                   <button
                     key={brand.name}
                     onClick={() => toggleBrand(brand.name)}
-                    className={`border-2 rounded-lg  transition-all ${
+                    className={`border-2 rounded-lg transition-all ${
                       selectedBrands.includes(brand.name)
                         ? "border-orange-400 bg-orange-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     <Image
-                      src={brand.logo || "brand-1.png"}
+                      src={brand.logo}
                       alt={brand.name}
                       width={100}
                       height={100}
@@ -378,6 +292,7 @@ export default function ShopPage() {
             </div>
           </aside>
 
+          {/* Mobile Filters (Slide-in) */}
           {mobileFiltersOpen && (
             <>
               <div
@@ -396,76 +311,36 @@ export default function ShopPage() {
                 </div>
 
                 <div className="p-4 space-y-6">
+                  {/* Categories */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">
-                      Categories
-                    </h3>
+                    <h3 className="font-bold text-[#482817] mb-4">Categories</h3>
                     <div className="space-y-3">
                       {CATEGORIES.map((category) => (
-                        <div
-                          key={category}
-                          className="flex items-center space-x-2"
-                        >
+                        <div key={category.id} className="flex items-center space-x-2">
                           <input
                             type="checkbox"
-                            id={`mobile-${category}`}
-                            checked={selectedCategories.includes(category)}
-                            onChange={() => toggleCategory(category)}
+                            id={`mobile-${category.id}`}
+                            checked={selectedCategories.includes(category.id)}
+                            onChange={() => toggleCategory(category.id)}
                             className="w-4 h-4 text-orange-400 border-gray-300 rounded focus:ring-orange-400 cursor-pointer"
                           />
                           <label
-                            htmlFor={`mobile-${category}`}
+                            htmlFor={`mobile-${category.id}`}
                             className="text-sm text-gray-700 cursor-pointer"
                           >
-                            {category}
+                            {category.name}
                           </label>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">Price</h3>
-                    <div className="mb-4">
-                      <input
-                        type="range"
-                        min={40}
-                        max={400}
-                        step={10}
-                        value={priceRange[0]}
-                        onChange={(e) =>
-                          setPriceRange([
-                            Number.parseInt(e.target.value),
-                            priceRange[1],
-                          ])
-                        }
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400"
-                      />
-                      <input
-                        type="range"
-                        min={40}
-                        max={400}
-                        step={10}
-                        value={priceRange[1]}
-                        onChange={(e) =>
-                          setPriceRange([
-                            priceRange[0],
-                            Number.parseInt(e.target.value),
-                          ])
-                        }
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400 mt-2"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
-                    </div>
-                  </div>
+                  {/* Price */}
+                  <PriceFilter isMobile={true} />
 
+                  {/* Bottle Size */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">
-                      Bottle Size
-                    </h3>
+                    <h3 className="font-bold text-[#482817] mb-4">Bottle Size</h3>
                     <div className="grid grid-cols-4 gap-2">
                       {BOTTLE_SIZES.map((size) => (
                         <button
@@ -483,10 +358,9 @@ export default function ShopPage() {
                     </div>
                   </div>
 
+                  {/* Brands */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">
-                      Select Brands
-                    </h3>
+                    <h3 className="font-bold text-[#482817] mb-4">Select Brands</h3>
                     <div className="grid grid-cols-3 gap-3">
                       {BRANDS.map((brand) => (
                         <button
@@ -499,7 +373,7 @@ export default function ShopPage() {
                           }`}
                         >
                           <Image
-                            src={brand.logo || "/brand-1.png"}
+                            src={brand.logo}
                             alt={brand.name}
                             width={60}
                             height={60}
@@ -521,20 +395,20 @@ export default function ShopPage() {
             </>
           )}
 
+          {/* Main Content */}
           <main className="flex-1">
-            <div className=" p-4 rounded-lg mb-6">
+            <div className="p-4 rounded-lg mb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="text-xl md:text-2xl font-semibold  text-[#968F8F]">
-                  Showing {startIndex + 1}-
-                  {Math.min(startIndex + itemsPerPage, sortedProducts.length)}{" "}
-                  of {sortedProducts.length} item(s)
+                <div className="text-xl md:text-2xl font-semibold text-[#968F8F]">
+                  Showing {startIndex + 1}–
+                  {Math.min(startIndex + itemsPerPage, sortedProducts.length)} of {sortedProducts.length} item(s)
                 </div>
 
-                <div className="py-4 px-4 sm:px-6 lg:px-8 ">
+                <div className="py-4 px-4 sm:px-6 lg:px-8">
                   <div className="max-w-7xl mx-auto">
-                    {/* Search + Sort Row */}
+                    {/* Search + Sort */}
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-4">
-                      {/* Search Bar */}
+                      {/* Search */}
                       <div className="relative w-full sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         <input
@@ -542,34 +416,15 @@ export default function ShopPage() {
                           placeholder="Search..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="
-      pl-10 pr-3 py-2 w-full 
-      bg-transparent               
-      border border-[#DEEDE2]      
-      rounded-[4px]
-      text-gray-700           
-      placeholder:text-gray-400    
-      outline-none                
-focus:outline-none focus:ring-2              
-      focus:border-[#DEEDE2]    
-    "
+                          className="pl-10 pr-3 py-2 w-full bg-transparent border border-[#DEEDE2] rounded-[4px] text-gray-700 placeholder:text-gray-400 outline-none focus:outline-none focus:ring-2 focus:border-[#DEEDE2]"
                         />
                       </div>
 
-                      {/* Sort By Dropdown */}
+                      {/* Sort */}
                       <div className="relative w-full sm:w-40">
                         <button
                           onClick={() => toggleDropdown("sort")}
-                          className="
-      w-full px-3 py-2 
-
-      border border-[#DEEDE2] 
-      rounded-[4px] 
-      text-sm text-gray-700 
-      flex items-center justify-between 
-      hover:border-gray-400 
-      focus:outline-none focus:ring-2  focus:border-transparent
-    "
+                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] text-sm text-gray-700 flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2"
                         >
                           <span>Sort by</span>
                           <ChevronDown className="w-4 h-4 text-gray-600" />
@@ -577,96 +432,98 @@ focus:outline-none focus:ring-2
 
                         {activeDropdown === "sort" && (
                           <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                            <button
-                              onClick={() => {
-                                setSortBy("best-offer");
-                                setActiveDropdown(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                            >
-                              Best Offer
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSortBy("price-low");
-                                setActiveDropdown(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                            >
-                              Price Low
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSortBy("price-high");
-                                setActiveDropdown(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                            >
-                              Price High
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSortBy("wishlist");
-                                setActiveDropdown(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                            >
-                              Wishlist
-                            </button>
+                            {[
+                              { key: "best-offer", label: "Best Offer" },
+                              { key: "price-low", label: "Price Low" },
+                              { key: "price-high", label: "Price High" },
+                              { key: "wishlist", label: "Wishlist" },
+                            ].map((opt) => (
+                              <button
+                                key={opt.key}
+                                onClick={() => {
+                                  setSortBy(opt.key);
+                                  setActiveDropdown(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* Filter Dropdowns Row */}
+                    {/* Additional Dropdowns */}
                     <div className="flex flex-wrap gap-3">
-                      {/* Brand Dropdown */}
-                <div className="relative w-full sm:w-32">
-  <button
-    onClick={() => toggleDropdown("brand")}
-    className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px]  flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2  text-sm text-gray-700"
-  >
-    <span>Brand</span>
-    <ChevronDown className="w-4 h-4 text-gray-600" />
-  </button>
+                      {/* Brand */}
+                      <div className="relative w-full sm:w-32">
+                        <button
+                          onClick={() => toggleDropdown("brand")}
+                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
+                        >
+                          <span>Brand</span>
+                          <ChevronDown className="w-4 h-4 text-gray-600" />
+                        </button>
+                        {activeDropdown === "brand" && (
+                          <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
+                            <button
+                              onClick={() => {
+                                setSelectedBrands([]);
+                                setActiveDropdown(null);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                            >
+                              All Brands
+                            </button>
+                            {BRANDS.map((brand) => (
+                              <button
+                                key={brand.name}
+                                onClick={() => {
+                                  toggleBrand(brand.name);
+                                  setActiveDropdown(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <Image
+                                  src={brand.logo}
+                                  alt={brand.name}
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                {brand.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-  {activeDropdown === "brand" && (
-    <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
-      <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">All Brands</button>
-      <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">Brand A</button>
-      <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">Brand B</button>
-    </div>
-  )}
-</div>
-
-                      {/* Categories Dropdown */}
+                      {/* Category */}
                       <div className="relative w-full sm:w-40">
                         <button
                           onClick={() => toggleDropdown("categories")}
-                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px]  flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2  text-sm text-gray-700"
+                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
                         >
-                          <span className="text-sm">Categories</span>
+                          <span>Categories</span>
                           <ChevronDown className="w-4 h-4 text-gray-600" />
                         </button>
                         {activeDropdown === "categories" && (
                           <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-10">
                             <div className="p-3">
-                              <div className="text-xs font-medium text-gray-500 mb-2">
-                                Filter by Categories
-                              </div>
-                              {categories.map((cat) => (
+                              {CATEGORIES.map((cat) => (
                                 <label
                                   key={cat.id}
                                   className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50"
                                 >
                                   <div
-                                    className={`w-4 h-4 border ${
-                                      cat.checked
+                                    className={`w-4 h-4 border rounded flex items-center justify-center ${
+                                      selectedCategories.includes(cat.id)
                                         ? "bg-[#EA1E1E] border-[#EA1E1E]"
                                         : "border-gray-300"
-                                    } rounded flex items-center justify-center`}
+                                    }`}
                                   >
-                                    {cat.checked && (
+                                    {selectedCategories.includes(cat.id) && (
                                       <Check className="w-3 h-3 text-white" />
                                     )}
                                   </div>
@@ -678,29 +535,38 @@ focus:outline-none focus:ring-2
                         )}
                       </div>
 
-                      {/* Bottle Size Dropdown */}
+                      {/* Bottle Size */}
                       <div className="relative w-full sm:w-36">
                         <button
                           onClick={() => toggleDropdown("bottleSize")}
-                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px]  flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2  text-sm text-gray-700"
+                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
                         >
-                          <span className="text-sm">Bottle Size</span>
+                          <span>Bottle Size</span>
                           <ChevronDown className="w-4 h-4 text-gray-600" />
                         </button>
                         {activeDropdown === "bottleSize" && (
                           <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                            <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">
+                            <button
+                              onClick={() => {
+                                setSelectedBottleSizes([]);
+                                setActiveDropdown(null);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                            >
                               All Sizes
                             </button>
-                            <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">
-                              750ml
-                            </button>
-                            <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">
-                              1.5L
-                            </button>
-                            <button className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100">
-                              3L
-                            </button>
+                            {BOTTLE_SIZES.map((size) => (
+                              <button
+                                key={size}
+                                onClick={() => {
+                                  toggleBottleSize(size);
+                                  setActiveDropdown(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                              >
+                                {size}
+                              </button>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -710,6 +576,7 @@ focus:outline-none focus:ring-2
               </div>
             </div>
 
+            {/* Product Grid */}
             {paginatedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {paginatedProducts.map((product) => (
@@ -718,12 +585,11 @@ focus:outline-none focus:ring-2
               </div>
             ) : (
               <div className="bg-white rounded-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">
-                  No products found matching your filters.
-                </p>
+                <p className="text-gray-500 text-lg">No products found matching your filters.</p>
               </div>
             )}
 
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
@@ -734,24 +600,28 @@ focus:outline-none focus:ring-2
                   Previous
                 </button>
 
-                {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`w-10 h-10 rounded-md border ${
-                      currentPage === i + 1
-                        ? "bg-orange-400 text-white border-orange-400"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  let pageNum = i + 1;
+                  if (totalPages > 5 && currentPage > 3 && i === 4) {
+                    pageNum = totalPages;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-md border ${
+                        currentPage === pageNum
+                          ? "bg-orange-400 text-white border-orange-400"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
 
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

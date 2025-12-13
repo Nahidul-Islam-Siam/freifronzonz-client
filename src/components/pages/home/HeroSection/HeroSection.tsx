@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full h-[80vh] sm:h-[70vh] md:h-[80vh] lg:h-[100vh] overflow-hidden">
+    <div className="relative w-full h-[80vh] sm:h-[70vh] md:h-[80vh] lg:h-[80vh] overflow-hidden">
       {/* Background Image — FULL SECTION SIZE */}
       <div className="absolute inset-0">
         <Image

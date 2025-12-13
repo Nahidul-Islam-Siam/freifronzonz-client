@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Heart, Search, ShoppingCart } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Product {
   id: number;
@@ -32,7 +33,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
- <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+ <Link href={`/shop/${product.id}`} className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
   <div className="relative bg-gray-50 h-48 sm:h-56 md:h-64 flex items-center justify-center overflow-hidden group">
     <Image
       width={400}
@@ -82,7 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       </span>
     </div>
   </div>
-</div>
+</Link>
 
   );
 }

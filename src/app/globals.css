@@ -26,12 +26,22 @@
 /* ✅ CRITICAL: Set background image on html AND body */
 html,
 body {
-  background: url("/bg.png") center/cover no-repeat fixed !important;
-  background-color: transparent !important;
+  position: relative;
   min-height: 100vh;
   margin: 0;
   color: var(--foreground);
+  background-color: transparent;
 }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("/bg.png") center/cover no-repeat;
+  /* opacity: 0.8; 50% */
+  z-index: -1;
+}
+
 
 /* Override Ant Design defaults that add white backgrounds */
 .ant-layout,
