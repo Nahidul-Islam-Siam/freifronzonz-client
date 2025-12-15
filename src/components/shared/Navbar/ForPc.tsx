@@ -11,7 +11,7 @@ import NavMenu from "./NavMenu";
 const ForPc = () => {
   return (
     <div className="bg-primary">
-      <div className="container hidden lg:flex py-3 items-center justify-between ">
+      <div className="max-w-7xl mx-auto hidden lg:flex py-3 items-center justify-between ">
         <Link href={"/"}>
           <div className="flex items-center gap-2 h-full -ml-4 w-48">
             <Image

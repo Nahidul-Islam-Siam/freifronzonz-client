@@ -29,7 +29,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen ">
-      <div className="container mx-auto px-4 py-8 ">
+      <div className="max-w-7xl mx-auto px-4 py-8 ">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600 mb-6">
           <Link href="/" className="hover:text-[#C77D2F]">

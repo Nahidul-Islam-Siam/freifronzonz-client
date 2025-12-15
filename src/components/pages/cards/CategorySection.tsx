@@ -300,7 +300,7 @@ export default function CategorYSection() {
   const hasMore = filteredProducts.length > 12
 
   return (
-    <main className="min-h-screen container mx-auto py-12 md:py-24">
+    <main className="min-h-screen max-w-7xl mx-auto py-12 md:py-24">
       {/* Header */}
       <div className="py-12 px-4 sm:px-6 lg:px-8 mx-auto">
         <h1 className="text-4xl font-extrabold font-abhaya text-center text-[#6D0E0B] md:text-[48px] mb-8">

@@ -114,7 +114,7 @@ const Navbar = () => {
   return (
     <div className="relative bg-[#E8E2D7] py-5">
       <div
-        className="container"
+        className="max-w-7xl"
         style={{
           display: "flex",
           justifyContent: "space-between",

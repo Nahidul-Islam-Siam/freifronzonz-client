@@ -54,7 +54,7 @@ export default function CartPage() {
   const total = subtotal + shippingFee;
 
   return (
-<div className="container mx-auto px-4 py-8 sm:py-12">
+<div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
   <h1 className="text-xl sm:text-2xl font-bold text-[#482817] mb-6">Your Cart</h1>
 
   {/* Main Layout */}

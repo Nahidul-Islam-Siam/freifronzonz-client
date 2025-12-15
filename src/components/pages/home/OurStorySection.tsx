@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function OurStorySection() {
   return (
     <section className="py-16 md:py-24 px-4 md:px-8 lg:px-12">
-      <div className="container mx-auto flex flex-col lg:flex-row items-start gap-12">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-start gap-12">
         {/* LEFT SIDE - TEXT CONTENT */}
         <div className="lg:w-1/2 space-y-6">
           <h2 className="text-3xl font-bold text-[#6D0E0B] font-abhaya">

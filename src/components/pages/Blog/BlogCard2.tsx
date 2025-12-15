@@ -1,11 +1,27 @@
 import Image from "next/image";
 import React from "react";
 
-export default function Tradition() {
+
+export default function BlogCard2() {
   return (
     <section className=" py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         {/* Text Content */}
+                <div className="relative">
+          <div className="aspect-[4/3] bg-gradient-to-br from-amber-200 to-rose-300  shadow-xl">
+            {/* Placeholder for your actual image */}
+            <div className="w-full h-full flex items-center justify-center text-amber-900 font-bold">
+              <Image
+                src="/images/tradition.png"
+                alt="Tradition"
+                width={400}
+                height={400}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+        
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold text-black font-abhaya mb-6">
             Where Tradition Meets Winemaking
@@ -27,20 +43,7 @@ export default function Tradition() {
         </div>
 
         {/* Hero Image */}
-        <div className="relative">
-          <div className="aspect-[4/3] bg-gradient-to-br from-amber-200 to-rose-300  shadow-xl">
-            {/* Placeholder for your actual image */}
-            <div className="w-full h-full flex items-center justify-center text-amber-900 font-bold">
-              <Image
-                src="/images/tradition.png"
-                alt="Tradition"
-                width={400}
-                height={400}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
+
       </div>
     </section>
   );

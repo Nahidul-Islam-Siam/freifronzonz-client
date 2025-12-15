@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-[#FDF8EB]   border-gray-300">
       {/* Main Footer Content */}
-      <div className="container mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Contact Us */}
           <div>
@@ -155,7 +155,7 @@ const Footer = () => {
 
       {/* Copyright Section */}
       <div className="border-t-2 border-[#968F8F] bg-[#FDF8EB] py-4">
-        <div className= "container mx-auto px-6 ">
+        <div className= "max-w-7xl mx-auto px-6 ">
           <p className=" font-normal text-[#968F8F]  mb-4 text-sm">Copyright © 2025 Ops Wine.</p>
         </div>
       </div>
