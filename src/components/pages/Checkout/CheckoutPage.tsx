@@ -36,9 +36,7 @@ export default function CheckoutPage() {
     email: "",
     phone: "",
     address: "",
-    city: "",
-    postalCode: "",
-    country: "Bangladesh",
+    // Removed city, postalCode, country as per image
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -91,8 +89,6 @@ export default function CheckoutPage() {
     }
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
-    if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -110,7 +106,7 @@ export default function CheckoutPage() {
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Left: Cart Items (50%) — EXACTLY as before */}
+        {/* Left: Cart Items (50%) */}
         <div className="lg:w-1/2 w-full space-y-6">
           {cartItems.length === 0 ? (
             <div className="bg-white rounded-lg text-center border border-[#000000] p-6">
@@ -155,7 +151,7 @@ export default function CheckoutPage() {
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         className="w-8 h-8 flex items-center justify-center bg-[#E9E9E9] rounded hover:bg-gray-200"
                       >
-                        –
+                        -
                       </button>
                       <span className="w-10 text-center font-bold text-[#1F1F1F]">
                         {item.quantity.toString().padStart(2, "0")}
@@ -208,110 +204,142 @@ export default function CheckoutPage() {
             ))
           )}
 
-
-                    <div className="flex justify-between font-bold text-lg">
-                <span className="text-[#1F1F1F] md:text-xl text-base font-medium">Total:</span>
-                <span className="font-extrabold text-2xl md:text-3xl font-abhaya text-[#1F1F1F]">
-                  ${total.toFixed(2)}
-                </span>
-              </div>
+          {/* Modified Total Display */}
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+            <span className="font-bold text-lg md:text-xl text-[#1F1F1F]">Total:</span>
+            <span className="font-extrabold text-2xl md:text-3xl font-abhaya text-[#1F1F1F]">
+              ${total.toFixed(2)}
+            </span>
+          </div>
         </div>
-
-        
 
         {/* Vertical Divider */}
         <div className="hidden lg:block w-px bg-black my-12"></div>
 
-        {/* Right: Checkout Form (50%) */}
+        {/* Right: Checkout Form (50%) - Modified to match image */}
         <div className="lg:w-1/2 w-full">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name *
+            <div className=" rounded-lg p-6">
+              <h2 className="text-xl font-extrabold text-[#0B0B0B] md:text-3xl font-abhaya mb-4">Fill info</h2>
+
+              {/* Name Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
+                    First Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-4 bg-[#F0F0F0] placeholder:text-gray-400 border rounded-md focus:outline-none  focus:ring-2 ${
+                      errors.firstName
+                        ? "border-red-500 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-[#C77D2F]"
+                    }`}
+                    placeholder="Your Name"
+                  />
+                  {errors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
+                    Last Name 
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-4 bg-[#F0F0F0] placeholder:text-gray-400 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.lastName
+                        ? "border-red-500 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-[#C77D2F]"
+                    }`}
+                    placeholder="Your Name"
+                  />
+                  {errors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Email Field */}
+              <div className="mb-4">
+                <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
+                  Email 
                 </label>
                 <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                    errors.firstName
+                  className={`w-full px-4 py-4 bg-[#F0F0F0] placeholder:text-gray-400 border rounded-md focus:outline-none focus:ring-2 ${
+                    errors.email
                       ? "border-red-500 focus:ring-red-200"
                       : "border-gray-300 focus:ring-[#C77D2F]"
                   }`}
-                  placeholder="First Name"
+                  placeholder="Your Email"
                 />
-                {errors.firstName && (
-                  <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                 )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name *
+
+              {/* Phone Field */}
+              <div className="mb-4">
+                <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
+                  Phone 
                 </label>
                 <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                    errors.lastName
+                  className={`w-full px-4 py-4 bg-[#F0F0F0] placeholder:text-gray-400 border rounded-md focus:outline-none focus:ring-2 ${
+                    errors.phone
                       ? "border-red-500 focus:ring-red-200"
                       : "border-gray-300 focus:ring-[#C77D2F]"
                   }`}
-                  placeholder="Last Name"
+                  placeholder="+880 1XXXXXXXX"
                 />
-                {errors.lastName && (
-                  <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
                 )}
               </div>
+
+              {/* Address Field */}
+              <div className="mb-6">
+                <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
+                  Address *
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-4 bg-[#F0F0F0] placeholder:text-gray-400 border rounded-md focus:outline-none focus:ring-2 ${
+                    errors.address
+                      ? "border-red-500 focus:ring-red-200"
+                      : "border-gray-300 focus:ring-[#C77D2F]"
+                  }`}
+                  placeholder="Your Address"
+                />
+                {errors.address && (
+                  <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="w-full bg-[#C77D2F] text-white font-bold py-4 px-4 rounded hover:bg-[#B06A28] transition-colors"
+              >
+                Submit Now
+              </button>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  errors.email
-                    ? "border-red-500 focus:ring-red-200"
-                    : "border-gray-300 focus:ring-[#C77D2F]"
-                }`}
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  errors.phone
-                    ? "border-red-500 focus:ring-red-200"
-                    : "border-gray-300 focus:ring-[#C77D2F]"
-                }`}
-                placeholder="+880 1XXXXXXXX"
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-              )}
-            </div>
-
-
           </form>
         </div>
       </div>
