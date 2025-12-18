@@ -11,13 +11,14 @@ export default function Navbar() {
   const [language, setLanguage] = useState("English");
 
   const navItems = [
-    { label: "HOME", href: "/" },
-    { label: "Pages", href: "/pages" },
+    { label: "Home", href: "/" },
+    // { label: "Pages", href: "/pages" },
     { label: "Shop", href: "/shop" },
     { label: "Events", href: "/events" },
     { label: "FAQ", href: "/faq" },
     { label: "Blog", href: "/blog" },
     { label: "Contacts", href: "/contacts" },
+    { label: "About", href: "/about" },
   ];
 
   return (

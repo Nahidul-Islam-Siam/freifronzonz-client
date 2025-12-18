@@ -10,8 +10,8 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Domain Name",
-  description: "Website slogan",
+  title: "Ops Wine",
+  description: "Ops Wine - An wine store",
 };
 
 export default function RootLayout({

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 export default function BlogCard1() {
@@ -21,9 +22,9 @@ export default function BlogCard1() {
               that reflect both heritage and contemporary excellence.
             </p>
           </div>
-          <button className="px-8 py-3 border-2 border-amber-700 text-[#482817] font-semibold hover:bg-amber-700 hover:text-white transition-colors">
+          <Link href="/blog/1" className="px-8 py-3 border-2 border-amber-700 text-[#482817] font-semibold hover:bg-amber-700 hover:text-white transition-colors">
             Read More
-          </button>
+          </Link>
         </div>
 
         {/* Hero Image */}
