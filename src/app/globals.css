@@ -17,11 +17,18 @@
   }
 }
 
+.admin-root {
+  background: #ffffff;
+  min-height: 100vh;
+  width: 100%;
+}
+
+
 .font-marcellus {
   font-family: "Marcellus", serif;
 
 }
-
+ 
 
 /* ✅ CRITICAL: Set background image on html AND body */
 html,
@@ -125,3 +132,79 @@ input[type="number"] {
   background-color: #b45309;
   color: white;
 }
+
+
+
+
+
+/* custom code for the default color from the antd design */
+
+.ant-table,
+.ant-table-container,
+.ant-table-content,
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.ant-pagination,
+.ant-pagination-item,
+.ant-pagination-item-link {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.ant-pagination-item-active {
+  background-color: #e6f4ff !important;
+  border-color: #1677ff !important;
+}
+
+.ant-dropdown,
+.ant-dropdown-menu,
+.ant-select-dropdown {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.ant-btn {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.ant-btn-primary {
+  background-color: #1677ff !important;
+  color: #ffffff !important;
+}
+
+/* Force light background on Select */
+.ant-select-selector {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.ant-select-item-option-selected {
+  background-color: #e6f4ff !important;
+  color: #000000 !important;
+}
+
+.ant-select-item-option-active {
+  background-color: #f5f5f5 !important;
+}
+
+
+/* Force Modal background white */
+.ant-modal-content {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+
+/* Force AntD Input background to white */
+.ant-input,
+.ant-input-affix-wrapper {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #d9d9d9 !important;
+}
+

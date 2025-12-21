@@ -14,7 +14,7 @@ interface AdminHeaderProps {
 const AdminHeader: React.FC<AdminHeaderProps> = ({
   open,
   setOpen,
-  colorBgContainer,
+  // colorBgContainer,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -22,14 +22,14 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     <header
       style={{
         padding: "0 24px",
-        background: colorBgContainer,
+        // background: colorBgContainer,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         height: "64px",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+        // boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
       }}
-      className="border-b border-gray-200 relative"
+      // className="border-b border-gray-200 relative"
     >
       {/* Mobile Menu Icon */}
       <div className="lg:hidden">
@@ -51,10 +51,10 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Search Bar - Desktop Only */}
 
         {/* Add Product Button */}
-        <button className="bg-[#A7997D] hover:bg-[#8d7c68] text-white px-4 py-2 rounded-[14px] text-sm font-medium flex items-center space-x-1 transition-colors">
+        <Link href="/dashboard/all-product/add-product" className="bg-[#AF6900] hover:bg-[#8d7c68] text-white px-4 py-2 rounded-[14px] text-sm font-medium flex items-center space-x-1 transition-colors">
           <span>+</span>
           <span>Add Product</span>
-        </button>
+        </Link>
 
         {/* Notification Bell */}
         <div className="relative">

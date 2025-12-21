@@ -1,4 +1,4 @@
-// app/page.tsx (or wherever your route is)
+// app/page.tsx
 "use client";
 
 import RecentBookingsTable from "@/components/Dashboard/RecentBookingsTable";
@@ -8,9 +8,10 @@ import { Layout, Row, Col } from "antd";
 import { useState } from "react";
 
 const { Content } = Layout;
-type TimeRange = "daily" | "weekly" | "monthly" | "yearly";
+// type TimeRange = "daily" | "weekly" | "monthly" | "yearly";
+
 export default function DashboardPage() {
-  const [timeRange, setTimeRange] = useState<TimeRange>("weekly");
+  // const [timeRange, setTimeRange] = useState<TimeRange>("weekly");
   const [currentPage, setCurrentPage] = useState(1);
 
   return (
@@ -18,23 +19,30 @@ export default function DashboardPage() {
       <Content style={{ padding: "40px" }}>
         {/* Stat Cards */}
         <Row gutter={[24, 24]}>
-          <StatCards />
+          <Col span={24}>
+            <StatCards />
+          </Col>
         </Row>
 
         {/* Revenue Chart */}
         <Row gutter={[24, 24]} style={{ marginBottom: "40px" }}>
           <Col span={24}>
-            <RevenueChart timeRange={timeRange} setTimeRange={setTimeRange} />
+            <RevenueChart/>
           </Col>
         </Row>
 
-        {/* Booking Table */}
+        {/* Booking Table — FIXED HERE */}
         <Row gutter={[24, 24]}>
           <Col span={24}>
-            <RecentBookingsTable
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-            />
+            {/* Booking Table */}
+            <Row gutter={[24, 24]}>
+              <Col span={24}>
+                <RecentBookingsTable
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                />
+              </Col>
+            </Row>
           </Col>
         </Row>
       </Content>

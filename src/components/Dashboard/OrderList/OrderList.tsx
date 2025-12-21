@@ -3,11 +3,11 @@
 
 'use client';
 
-import { Card, Table, Dropdown, Button, Modal, Typography, Tag } from 'antd';
+import { Card, Table, Dropdown, Button, Modal,  Tag } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
-const { Text } = Typography;
+// const { Text } = Typography;
 
 /** Interface for order data */
 interface OrderRecord {
@@ -39,7 +39,7 @@ const orderData: OrderRecord[] = Array.from({ length: 12 }, (_, i) => ({
   status: ['Complete', 'Cancelled', 'Pending'][i % 3] as OrderRecord['status'],
 }));
 
-export default function RecentBookingsTable({
+export default function OrderList({
   currentPage,
   setCurrentPage,
 }: RecentBookingsTableProps) {
@@ -316,59 +316,93 @@ export default function RecentBookingsTable({
         `}</style>
       </Card>
 
-      {/* 💡 Modal: Order Details */}
-      <Modal
-        title="Order Details"
-        open={isModalVisible}
-        onCancel={closeModal}
-        footer={null}
-        centered
-        width={600}
+{/* 💡 Modal: Order Details — EXACT MATCH TO IMAGE */}
+<Modal
+  title={
+    <div className="flex justify-between items-center w-full bg-white">
+      <h3 className="text-lg font-semibold text-gray-800">Order Details</h3>
+      {/* <button
+        onClick={closeModal}
+        className="text-gray-500 hover:text-gray-700 text-xl"
+        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        {selectedOrder && (
-          <div style={{ padding: '20px', lineHeight: '2.2' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Order ID</Text>
-              <Text>{selectedOrder.orderId}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Customer</Text>
-              <Text>{selectedOrder.customer}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Product</Text>
-              <Text>{selectedOrder.product}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Order Date</Text>
-              <Text>{selectedOrder.orderDate}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Qty</Text>
-              <span
-                style={{
-                  backgroundColor: '#A7997D',
-                  color: 'white',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                }}
-              >
-                {selectedOrder.qty}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Total Amount</Text>
-              <Text>${selectedOrder.totalAmount}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Status</Text>
-              {renderStatusTag(selectedOrder.status)}
-            </div>
+        ×
+      </button> */}
+    </div>
+  }
+  open={isModalVisible}
+  onCancel={closeModal}
+  footer={null}
+  centered
+  width={800}
+  styles={{
+    body: {
+      padding: '24px',
+      backgroundColor: '#fff',
+      borderRadius: '8px',
+    },
+  }}
+>
+  {selectedOrder && (
+    <div className="grid grid-cols-2 gap-6">
+      {/* Left Column: Customer Info */}
+      <div className="bg-white p-4 border border-gray-200 rounded-lg">
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Customer Name :</span>
+            <span className="text-gray-900">Jonson Emily</span>
           </div>
-        )}
-      </Modal>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Phone Number :</span>
+            <span className="text-gray-900">+8801XXXXXXXXX</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Email :</span>
+            <span className="text-gray-900">sjdhfhvigh@gmail.com</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Address :</span>
+            <span className="text-gray-900">RG89+C4G, Av. de los Shires, Quito 170135, Ecuador</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Order Info */}
+      <div className="bg-white p-4 border border-gray-200 rounded-lg">
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Product Name :</span>
+            <span className="text-gray-900">Red Wine</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Order Date :</span>
+            <span className="text-gray-900">12/12/2025</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Product Id :</span>
+            <span className="text-gray-900">{selectedOrder.orderId}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Product QTY :</span>
+            <span className="text-gray-900">{selectedOrder.qty}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Total Amount :</span>
+            <span className="text-gray-900">${selectedOrder.totalAmount}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium text-gray-700">Payment :</span>
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white"
+            >
+              Paid
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</Modal>
     </>
   );
 }

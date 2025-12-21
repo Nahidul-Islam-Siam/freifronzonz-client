@@ -24,7 +24,7 @@ export default function Navbar() {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-[#FDF8EB] border-b border-gray-200 hidden sm:block font-roboto">
+      <div className="bg-[#FDF8EB] border-b border-gray-200  sm:block font-roboto">
         <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center text-xs sm:text-sm text-gray-600">
           <div className="flex gap-4 sm:gap-6">
             <Link

@@ -13,7 +13,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@nextui-org/react": "^2.4.8",
     "@reduxjs/toolkit": "^2.4.0",
-    "antd": "^5.27.4",
+    "antd": "^5.29.3",
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",

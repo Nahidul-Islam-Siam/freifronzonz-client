@@ -18,13 +18,13 @@ const navItems: MenuItem[] = [
     <LuLayoutDashboard />
   ),
   getItem(
-    <Link href="/dashboard/booking-list">Booking List</Link>,
-    "/dashboard/booking-list",
+    <Link href="/dashboard/order-list">Order List</Link>,
+    "/dashboard/order-list",
 <SlCalender />
   ),
   getItem(
-    <Link href="/dashboard/my-listing">My Listing</Link>,
-    "/dashboard/my-listing",
+    <Link href="/dashboard/all-product">All Products</Link>,
+    "/dashboard/all-product",
 <LuClipboardList />
   ),
   getItem(

@@ -61,7 +61,7 @@ export default function RootLayout({
                     colorSuccess: "#3ECF8E",
                     colorSuccessHover: "#36b87d",
                     colorSuccessActive: "#2fa36e",
-                    colorWarning: "#FAAD14",
+                    colorWarning: "#FAAD14", 
                     colorWarningHover: "#e89c0f",
                     colorWarningActive: "#c27e0d",
                     colorError: "#FF6B6B",

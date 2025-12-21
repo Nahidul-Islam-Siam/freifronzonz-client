@@ -1,100 +1,176 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // components/dashboard/RevenueChart.tsx
-import { Card, Select } from "antd";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-/** Data Interface */
+'use client';
+
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area } from 'recharts';
+import { useState } from 'react';
+
+/** Interface for chart data */
 interface ChartData {
-  name: string;
-  value: number;
+  date: string;
+  order: number;
+  store: number;
 }
 
-/** Component Props Interface */
-interface RevenueChartProps {
-  timeRange: "daily" | "weekly" | "monthly" | "yearly";
-  setTimeRange: (value: "daily" | "weekly" | "monthly" | "yearly") => void;
-}
+// Mock data based on your image
+const generateChartData = (timeRange: 'daily' | 'weekly' | 'monthly'): ChartData[] => {
+  return [
+    { date: 'Nov 01', order: 280, store: 500 },
+    { date: 'Nov 02', order: 350, store: 800 },
+    { date: 'Nov 03', order: 450, store: 600 },
+    { date: 'Nov 04', order: 600, store: 300 },
+    { date: 'Nov 05', order: 400, store: 650 },
+    { date: 'Nov 06', order: 500, store: 550 },
+    { date: 'Nov 07', order: 550, store: 400 },
+  ];
+};
 
-const chartData: ChartData[] = [
-  { name: "Featured Classes", value: 200 },
-  { name: "Signature Experiences", value: 450 },
-  { name: "Events of the Season", value: 600 },
-  { name: "Upcoming Events", value: 500 },
-  { name: "Lumina Packages", value: 400 },
-];
+export default function RevenueChart() {
+  const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const chartData = generateChartData(timeRange);
 
-export default function RevenueChart({ timeRange, setTimeRange }: RevenueChartProps) {
-  return (
-    <Card
-      title={
-        <div className="flex justify-between items-center">
-          <span style={{ fontSize: "18px", fontWeight: "600" }}>Total Revenue</span>
-          <Select
-            value={timeRange}
-            onChange={setTimeRange}
-            size="small"
-            style={{ width: 120 }}
-            options={[
-              { value: "daily", label: "Daily" },
-              { value: "weekly", label: "Weekly" },
-              { value: "monthly", label: "Monthly" },
-              { value: "yearly", label: "Yearly" },
-            ]}
-          />
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+          <p className="text-sm font-medium mb-1">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-xs" style={{ color: entry.color }}>
+              {entry.name}: {entry.value}
+            </p>
+          ))}
         </div>
-      }
-      style={{
-        borderRadius: "12px",
-        border: "none",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-        overflow: "hidden",
-      }}
-      bodyStyle={{ padding: "24px" }}
-    >
-      <ResponsiveContainer width="100%" height={400}>
-        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-          {/* Gradient Fill */}
-          <defs>
-            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#A7997D" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#A7997D" stopOpacity={0.1} />
-            </linearGradient>
-          </defs>
+      );
+    }
+    return null;
+  };
 
-          {/* Grid */}
-          <CartesianGrid strokeDasharray="3 3" stroke="#e8e8e8" />
+  return (
+    <div className="bg-white rounded-xl p-5 border border-[#E5E7EB] shadow-sm">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-[#A7997D]">Order Status</h2>
+        <div className="flex space-x-4">
+          {(['daily', 'weekly', 'monthly'] as const).map((range) => (
+            <button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                timeRange === range
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              {range.charAt(0).toUpperCase() + range.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
 
-          {/* Axes */}
-          <XAxis dataKey="name" tick={{ fill: "#666", fontSize: 12 }} axisLine={false} />
-          <YAxis tick={{ fill: "#666", fontSize: 12 }} axisLine={false} />
-
-          {/* Tooltip */}
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#fff",
-              borderRadius: "8px",
-              borderColor: "#e8e8e8",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-              fontSize: "14px",
+      {/* Chart */}
+      <div style={{ height: 300 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{
+              top: 10,
+              right: 30,
+              left: 20,
+              bottom: 10,
             }}
-          />
+          >
+            {/* Only horizontal grid lines */}
+            <CartesianGrid stroke="#F0F0F0" horizontal={true} vertical={false} />
+            <XAxis
+              dataKey="date"
+              tick={{
+                fontSize: 12,
+                fill: '#6B7280',
+              }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              domain={[100, 1000]}
+              ticks={[100, 300, 600, 1000]}
+              tick={{
+                fontSize: 12,
+                fill: '#6B7280',
+              }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} />
+<Legend
+  wrapperStyle={{
+    fontSize: '12px',
+    fontWeight: '500',
+    marginBottom: '10px',
+  }}
+  iconType="circle"
+  iconSize={6}
+  align="center"
+  verticalAlign="top"
+  layout="horizontal"
+/>
 
-          {/* Area Graph */}
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#A7997D"
-            fillOpacity={1}
-            fill="url(#colorValue)"
-            strokeWidth={2}
-            dot={{
-              r: 4,
-              fill: "#8884d8",
-              stroke: "#fff",
-              strokeWidth: 2,
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </Card>
+<Line
+  type="monotone"
+  dataKey="order"
+  name="Order"
+  stroke="#DC2626"
+  strokeWidth={2}
+  dot={false}
+/>
+<Line
+  type="monotone"
+  dataKey="store"
+  name="Store"
+  stroke="#2563EB"
+  strokeWidth={2}
+  dot={false}
+/>
+            {/* Red Line for Order */}
+            <Line
+              type="monotone"
+              dataKey="order"
+              stroke="#DC2626"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+            {/* Blue Line for Store */}
+            <Line
+              type="monotone"
+              dataKey="store"
+              stroke="#2563EB"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+            {/* Area Fill Under Lines */}
+            <Area
+              type="monotone"
+              dataKey="order"
+              stroke="#DC2626"
+              fill="#FEE2E2"
+              fillOpacity={0.3}
+              strokeWidth={0}
+            />
+            <Area
+              type="monotone"
+              dataKey="store"
+              stroke="#2563EB"
+              fill="#DBEAFE"
+              fillOpacity={0.3}
+              strokeWidth={0}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }

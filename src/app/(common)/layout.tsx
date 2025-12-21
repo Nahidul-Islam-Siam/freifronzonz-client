@@ -1,6 +1,3 @@
-
-
-
 import Footer from "@/components/shared/Footer/Footer";
 import Navbar from "@/components/shared/Navbar/Navbar";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton/ScrollToTopButton";
@@ -20,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
+    <div> 
       <NextUiProvider>
         <ReduxProvider>
           <>
@@ -28,7 +25,7 @@ export default function RootLayout({
               <div className="fixed top-0 z-50 w-full">
                 <Navbar />
               </div>
-              <div className="pt-[133.453px]">{children}</div>
+              <div className="md:pt-[133.453px] pt-[96.453px]">{children}</div>
 
               <Footer />
             </div>
