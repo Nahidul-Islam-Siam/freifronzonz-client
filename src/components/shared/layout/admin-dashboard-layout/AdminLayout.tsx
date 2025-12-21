@@ -1,51 +1,62 @@
+// app/(adminDashboard)/layout.tsx (or wherever your SuperAdminLayout is)
+
 "use client";
 
 import AdminLayout from "@/components/shared/layout/Layout";
-
 import Link from "next/link";
 import { ReactNode } from "react";
-import { LuLayoutDashboard } from "react-icons/lu";
-import { getItem, MenuItem } from "../Layout";
-import { SlCalender } from "react-icons/sl";
-import { LuClipboardList } from "react-icons/lu";
-import { CiSettings } from "react-icons/ci";
-import { BsPeople } from "react-icons/bs";
+
 import { RiContactsBook2Line } from "react-icons/ri";
+import { FaUsers, FaCalendarAlt, FaBox, FaCalendarCheck, FaMoneyBillWave, FaUserCog, FaCogs, FaSignOutAlt } from "react-icons/fa";
+
+// Import getItem function (assuming it's from your existing code)
+import { getItem, MenuItem } from "../Layout";
+
 const navItems: MenuItem[] = [
   getItem(
-    <Link href="/dashboard">Dashboard</Link>,
+    <Link href="/dashboard">Dashboards</Link>,
     "/dashboard",
-    <LuLayoutDashboard />
+    <FaUsers className="text-xl" />
   ),
   getItem(
     <Link href="/dashboard/order-list">Order List</Link>,
     "/dashboard/order-list",
-<SlCalender />
+    <FaCalendarAlt className="text-xl" />
   ),
   getItem(
-    <Link href="/dashboard/all-product">All Products</Link>,
+    <Link href="/dashboard/all-product">All Product</Link>,
     "/dashboard/all-product",
-<LuClipboardList />
+    <FaBox className="text-xl" />
   ),
   getItem(
-    <Link href="/dashboard/subscription">Subscription</Link>,
-    "/dashboard/subscription",
-    <LuLayoutDashboard />
+    <Link href="/dashboard/event">Events</Link>,
+    "/dashboard/event",
+    <FaCalendarCheck className="text-xl" />
+  ),
+  getItem(
+    <Link href="/dashboard/payment-list">Payment List</Link>,
+    "/dashboard/payment-list",
+    <FaMoneyBillWave className="text-xl" />
   ),
   getItem(
     <Link href="/dashboard/user">User</Link>,
     "/dashboard/user",
-<BsPeople />
+    <FaUserCog className="text-xl" />
   ),
-    getItem(
+  getItem(
     <Link href="/dashboard/contact-request">Contact Request</Link>,
     "/dashboard/contact-request",
-    <RiContactsBook2Line />
+    <RiContactsBook2Line className="text-xl" />
   ),
-      getItem(
+  getItem(
     <Link href="/dashboard/setting">Setting</Link>,
     "/dashboard/setting",
-    <CiSettings />
+    <FaCogs className="text-xl" />
+  ),
+  getItem(
+    <Link href="/auth/logout">Log out</Link>,
+    "/auth/logout",
+    <FaSignOutAlt className="text-xl" />
   ),
 ];
 

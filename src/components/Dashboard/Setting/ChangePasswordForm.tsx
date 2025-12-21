@@ -26,7 +26,7 @@ export default function ChangePassword() {
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Change Password</h3>
+      <h3 className="text-[#482817] md:text-3xl text-2xl font-extrabold font-abhaya mb-6">Change Password</h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -74,7 +74,7 @@ export default function ChangePassword() {
         <div className="pt-2">
           <button
             type="submit"
-            className="bg-[#A7997D] cursor-pointer text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
+            className="bg-[#AF6900] cursor-pointer text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
           >
             Update password
           </button>

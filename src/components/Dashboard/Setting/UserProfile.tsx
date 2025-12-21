@@ -133,7 +133,7 @@ export default function UserProfile() {
             }}
             tabIndex={0}
           >
-            <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+            <h3 className="text-[#482817] md:text-3xl text-2xl font-extrabold font-abhaya mb-6 text-center">
               Edit Profile
             </h3>
 
@@ -223,7 +223,7 @@ export default function UserProfile() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="px-4 py-2 bg-[#A7997D] border border-transparent rounded-md text-sm font-medium text-white hover:bg-[#8d7c68] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A7997D]"
+                className="px-4 py-2 bg-[#AF6900] border border-transparent rounded-md text-sm font-medium text-white hover:bg-[#8d7c68] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A7997D]"
               >
                 Change
               </button>

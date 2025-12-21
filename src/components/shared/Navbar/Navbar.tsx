@@ -164,11 +164,11 @@ export default function Navbar() {
                 </div>
 
                 {/* User Icon */}
-                <div className="">
+                <Link href="/profile" className="">
                   <button className="p-1.5 hover:bg-gray-100 rounded-full">
                     <User className="w-5 h-5 text-gray-700" />
                   </button>
-                </div>
+                </Link>
               </div>
 
               {/* Mobile Menu Button */}

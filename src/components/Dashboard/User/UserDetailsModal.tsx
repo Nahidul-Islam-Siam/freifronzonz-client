@@ -112,6 +112,7 @@ footer={null}
         header: {
           textAlign: "center",
           paddingBottom: "16px",
+          backgroundColor: "white",
         },
         body: {
           padding: "24px",
