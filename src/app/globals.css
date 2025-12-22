@@ -219,3 +219,8 @@ input[type="number"] {
   background-color: #AF6900 !important;
   color: #ffffff !important;
 }
+
+
+.ant-something{
+    background: transparent !important;
+}
