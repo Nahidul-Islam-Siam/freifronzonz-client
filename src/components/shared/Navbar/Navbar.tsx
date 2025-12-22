@@ -140,36 +140,35 @@ export default function Navbar() {
 
             {/* Right Icons */}
             <div className="flex items-center gap-4 ml-auto lg:ml-6">
-              {/* Search Icon - Mobile */}
-              <button className="lg:hidden p-1.5 hover:bg-gray-100 rounded-full">
-                <Search className="w-5 h-5 text-gray-700" />
-              </button>
+        
 
               {/* Cart Icon */}
-              <div className="  flex">
-                <div className="">
-                  <button className="p-1.5 hover:bg-gray-100 rounded-full relative ">
-                    <ShoppingCart className="w-5 h-5 text-gray-700" />
-                    <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      0
-                    </span>
-                  </button>
-                </div>
+       <div className="flex items-center gap-2">
+  {/* Cart */}
+  <Link href="/cart">
+    <button className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
+      <ShoppingCart className="w-5 h-5 text-gray-700" />
+      <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+        0
+      </span>
+    </button>
+  </Link>
 
-                {/* Wishlist Icon */}
-                <div className="">
-                  <button className="p-1.5 hover:bg-gray-100 rounded-full">
-                    <Heart className="w-5 h-5 text-gray-700" />
-                  </button>
-                </div>
+  {/* Wishlist */}
+  <Link href="/wishlist">
+    <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
+      <Heart className="w-5 h-5 text-gray-700" />
+    </button>
+  </Link>
 
-                {/* User Icon */}
-                <Link href="/profile" className="">
-                  <button className="p-1.5 hover:bg-gray-100 rounded-full">
-                    <User className="w-5 h-5 text-gray-700" />
-                  </button>
-                </Link>
-              </div>
+  {/* Profile */}
+  <Link href="/profile">
+    <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
+      <User className="w-5 h-5 text-gray-700" />
+    </button>
+  </Link>
+</div>
+
 
               {/* Mobile Menu Button */}
               <button

@@ -88,9 +88,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, menu }) => {
         />
 
         <Content
-          className="!overflow-y-auto !overflow-x-hidden"
+          className="!overflow-y-auto !overflow-x-hidden bg-[#F4F7FD] p-6"
           onClick={() => setOpen(false)}
-          style={{ padding: "24px", height: "100%" }}
+          style={{ height: "100%" }}
         >
           {children}
         </Content>

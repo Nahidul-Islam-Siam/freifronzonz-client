@@ -208,3 +208,14 @@ input[type="number"] {
   border-color: #d9d9d9 !important;
 }
 
+
+
+.ant-layout-content {
+  background: #F4F7FD !important;
+}
+
+
+.custom-sidebar .ant-menu-item-selected {
+  background-color: #AF6900 !important;
+  color: #ffffff !important;
+}
