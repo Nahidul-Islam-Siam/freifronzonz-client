@@ -7,14 +7,15 @@ export type UserType = {
   role: string;
   userId: string;
 };
-interface AuthSate {
+
+interface AuthState {
   user: UserType | null;
   accessToken: string | null;
   refreshToken: string | null;
   isLoading?: boolean;
 }
 
-const initialState: AuthSate = {
+const initialState: AuthState = {
   user: null,
   accessToken: null,
   refreshToken: null,
@@ -22,7 +23,7 @@ const initialState: AuthSate = {
 };
 
 const authSlice = createSlice({
-  name: "user",
+  name: "auth", // Optional: rename from "user" to "auth"
   initialState,
   reducers: {
     setUser(
@@ -34,25 +35,31 @@ const authSlice = createSlice({
       }>
     ) {
       state.user = action.payload.user;
-      state.isLoading = false;
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
+      state.isLoading = false;
     },
-    setAccessToken(state, action: { payload: string | null }) {
+    setAccessToken(state, action: PayloadAction<string | null>) {
       state.accessToken = action.payload;
     },
-    setRefreshToken(state, action: { payload: string | null }) {
+    setRefreshToken(state, action: PayloadAction<string | null>) {
       state.refreshToken = action.payload;
     },
-    setIsLoading(state, action: { payload: boolean }) {
+    setIsLoading(state, action: PayloadAction<boolean>) {
       state.isLoading = action.payload;
     },
     logout(state) {
+      // ✅ ONLY clear state — NO navigation here
       state.user = null;
       state.accessToken = null;
-      // Remove the "roll" cookie
-      document.cookie = "roll=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-      window.location.href = "/";
+      state.refreshToken = null;
+      
+      // ✅ Clear auth cookies (adjust names if needed)
+      document.cookie = "accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+      document.cookie = "refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+      
+      // ❌ REMOVE THIS:
+      // window.location.href = "/";
     },
   },
 });
@@ -60,9 +67,9 @@ const authSlice = createSlice({
 export const {
   setUser,
   setAccessToken,
+  setRefreshToken,
   setIsLoading,
   logout,
-  setRefreshToken,
 } = authSlice.actions;
 
 export default authSlice.reducer;

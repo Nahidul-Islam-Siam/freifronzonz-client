@@ -1,18 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Search, Menu, X, ShoppingCart, Heart, User } from "lucide-react";
 import Image from "next/image";
-import logo from "@/assets/logo/logo.png"; // Make sure this path is correct
+import logo from "@/assets/logo/logo.png";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store";
+import { logout } from "@/redux/features/auth"; // Adjust path if needed
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState("English");
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const role = useSelector((state: RootState) => state.auth.user?.role);
+
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setProfileMenuOpen(false);
+    router.push("/"); // Redirect to home after logout
+
+  };
 
   const navItems = [
     { label: "Home", href: "/" },
-    // { label: "Pages", href: "/pages" },
     { label: "Shop", href: "/shop" },
     { label: "Events", href: "/events" },
     { label: "FAQ", href: "/faq" },
@@ -24,7 +53,7 @@ export default function Navbar() {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-[#FDF8EB] border-b border-gray-200  sm:block font-roboto">
+      <div className="bg-[#FDF8EB] border-b border-gray-200 sm:block font-roboto">
         <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center text-xs sm:text-sm text-gray-600">
           <div className="flex gap-4 sm:gap-6">
             <Link
@@ -102,14 +131,14 @@ export default function Navbar() {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            {/* ✅ FIXED LOGO */}
+            {/* Logo */}
             <Link href="/" className="flex-shrink-0">
               <Image
                 src={logo}
                 alt="Ops.wine Logo"
-                width={150} // ← Use actual width
-                height={50} // ← Use actual height
-                priority // optional: helps with above-the-fold images
+                width={150}
+                height={50}
+                priority
               />
             </Link>
 
@@ -140,35 +169,76 @@ export default function Navbar() {
 
             {/* Right Icons */}
             <div className="flex items-center gap-4 ml-auto lg:ml-6">
-        
+              <div className="flex items-center gap-2">
+                {/* Cart (always visible) */}
+                <Link href="/cart">
+                  <button className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
+                    <ShoppingCart className="w-5 h-5 text-gray-700" />
+                    <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      0
+                    </span>
+                  </button>
+                </Link>
 
-              {/* Cart Icon */}
-       <div className="flex items-center gap-2">
-  {/* Cart */}
-  <Link href="/cart">
-    <button className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
-      <ShoppingCart className="w-5 h-5 text-gray-700" />
-      <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-        0
-      </span>
-    </button>
-  </Link>
+                {/* ✅ Auth UI with Dropdown */}
+                {accessToken ? (
+                  <>
+                    {/* Wishlist */}
+                    <Link href="/wishlist">
+                      <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
+                        <Heart className="w-5 h-5 text-gray-700" />
+                      </button>
+                    </Link>
 
-  {/* Wishlist */}
-  <Link href="/wishlist">
-    <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
-      <Heart className="w-5 h-5 text-gray-700" />
-    </button>
-  </Link>
+                    {/* Profile Dropdown Trigger */}
+                    <div className="relative" ref={profileMenuRef}>
+                      <button
+                        onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                        className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full"
+                        aria-haspopup="true"
+                        aria-expanded={profileMenuOpen}
+                      >
+                        <User className="w-5 h-5 text-gray-700" />
+                      </button>
 
-  {/* Profile */}
-  <Link href="/profile">
-    <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
-      <User className="w-5 h-5 text-gray-700" />
-    </button>
-  </Link>
-</div>
-
+                      {/* Dropdown Menu */}
+                      {profileMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                          <div className="py-1">
+                            <Link
+                              href={role === "ADMIN" ? "/dashboard" : "/profile"}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setProfileMenuOpen(false)}
+                            >
+                              {role === "ADMIN" ? "Dashboard" : "Profile"}
+                            </Link>
+                            <button
+                              onClick={handleLogout}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Logout
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Guest: Login / Sign Up */}
+                    <Link href="/login">
+                      <button className="text-sm border border-amber-700 px-4 py-2 font-medium text-gray-700 hover:text-amber-700 transition-colors">
+                        Login
+                      </button>
+                    </Link>
+                    <Link href="/register">
+                      <button className="text-sm border border-amber-700 px-4 py-2 font-medium text-gray-700 hover:text-amber-700 transition-colors">
+                        Sign Up
+                      </button>
+                    </Link>
+                  </>
+                )}
+              </div>
 
               {/* Mobile Menu Button */}
               <button
@@ -187,7 +257,6 @@ export default function Navbar() {
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="lg:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
-              {/* Mobile Search */}
               <div className="mb-4">
                 <div className="relative">
                   <input
@@ -198,8 +267,6 @@ export default function Navbar() {
                   <Search className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
                 </div>
               </div>
-
-              {/* Mobile Navigation Items */}
               <div className="flex flex-col gap-3">
                 {navItems.map((item) => (
                   <Link

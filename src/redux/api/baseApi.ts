@@ -9,10 +9,8 @@ import { RootState } from "../store";
 import { logout, setAccessToken } from "../features/auth";
 
 const baseQuery = fetchBaseQuery({
-  // baseUrl: "https://pamelam.code-commando.com/api",
-  baseUrl: "https://roof-cost.onrender.com/api/v1",
-  // baseUrl: "https://arcroofs.com/api/v1",
-  // baseUrl: "http://localhost:3000/api",
+
+  baseUrl: "http://localhost:4200/api/v1",
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth?.accessToken;
     if (token) {
@@ -30,7 +28,7 @@ const baseQueryWithReauth: BaseQueryFn<
 > = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  if (result.error && result.error.status === 401) {
+  if (result.error && result.error.status === 403) {
     // Refresh access token
     const refreshResult = await baseQuery(
       {

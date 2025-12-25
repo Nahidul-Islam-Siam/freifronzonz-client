@@ -3,10 +3,14 @@
 import { useState } from 'react';
 import { Edit } from 'lucide-react';
 import Image from 'next/image';
+import {  useGetUserProfileQuery } from '@/redux/service/auth/customer/profile';
 
 export default function ProfileSection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const {data} = useGetUserProfileQuery();
 
+  console.log("getme", data);
+  
   // Mock profile data (replace with real state or API)
   const [profile, setProfile] = useState({
     name: "Joahn Emily Carter",
