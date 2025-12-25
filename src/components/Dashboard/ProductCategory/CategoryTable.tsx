@@ -5,16 +5,31 @@
 import { Table, Popconfirm, message } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Image from 'next/image';
+// import { API_BASE_URL } from '@/lib/apiConfig'; // Add this if you have it
 
+// ✅ Match your real API response
 interface Category {
-  id: number;
+  id: string;           // ✅ string (MongoDB ObjectId)
   name: string;
-  logo: string;
+  des: string;          // description
+  img: string | null;   // ✅ field name is "img", not "logo"
 }
 
+// Helper: Build full image URL or use placeholder
+// const getImageUrl = (imgPath: string | null): string => {
+//   if (!imgPath) return '/placeholder-logo.png';
+  
+//   // If img is a full URL (http://...), use as-is
+//   if (imgPath.startsWith('http')) return imgPath;
+  
+//   // If relative path, prefix with API base URL
+//   return `${API_BASE_URL}/${imgPath}`;
+// };
+
 export default function CategoryTable({ categories }: { categories: Category[] }) {
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     message.success('Category deleted');
+    // TODO: Call delete mutation here
   };
 
   const columns = [
@@ -22,18 +37,19 @@ export default function CategoryTable({ categories }: { categories: Category[] }
       title: 'Category Name',
       dataIndex: 'name',
       key: 'name',
-      render: (text: string, record: Category) => (
+      render: (_: any, record: Category) => (
         <div className="flex items-center">
-          <Image
-            width={400}
-            height={400}
-            src={record.logo} 
-            alt={text} 
-            className="h-8 w-8 rounded mr-3 object-contain"
-            onError={(e) => (e.currentTarget.src = '/placeholder-logo.png')}
-          />
-          <span className="font-roboto text-gray-700">{text}</span>
+
+          <span className="font-roboto text-gray-700">{record.name}</span>
         </div>
+      ),
+    },
+    {
+      title: 'Description',
+      dataIndex: 'des',
+      key: 'des',
+      render: (text: string) => (
+        <span className="font-roboto text-gray-600 text-sm">{text}</span>
       ),
     },
     {
@@ -66,7 +82,7 @@ export default function CategoryTable({ categories }: { categories: Category[] }
       <Table
         dataSource={categories}
         columns={columns}
-        rowKey="id"
+        rowKey="id" // ✅ Now safe: id is string
         pagination={false}
         className="font-roboto"
         style={{ background: 'transparent' }}

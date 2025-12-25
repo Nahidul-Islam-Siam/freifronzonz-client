@@ -1,16 +1,83 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // components/ChangePasswordSection.jsx
 'use client';
 import { useState } from 'react';
 import { Input } from 'antd';
+import { useChangePasswordMutation } from '@/redux/service/auth/authApi';
+import Swal from 'sweetalert2';
 
 export default function ChangePasswordSection() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [changePassword] = useChangePasswordMutation();
 
-  const handleUpdatePassword = () => {
-    console.log("Update password:", { currentPassword, newPassword, confirmPassword });
-  };
+const handleUpdatePassword = async () => {
+  // ✅ Frontend validation
+  if (!currentPassword || !newPassword) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please fill in all fields.',
+    });
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'New password and confirm password do not match.',
+    });
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Password must be at least 6 characters long.',
+    });
+    return;
+  }
+
+  try {
+    // ✅ Send ONLY what backend expects: oldPassword + newPassword
+    const response = await changePassword({
+      oldPassword: currentPassword,    // ✅ renamed to match backend
+      newPassword: newPassword,        // ✅
+      // ❌ DO NOT send confirmPassword
+    }).unwrap();
+
+    if (response.status) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: response.message,
+      });
+
+      // ✅ Clear form on success
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: response.message,
+      });
+    }
+  } catch (error: any) {
+    console.error("Change password error:", error);
+    const message = error?.data?.message || error?.message || 'An error occurred while changing the password.';
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: message,
+    });
+  }
+}; 
+   
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-8">

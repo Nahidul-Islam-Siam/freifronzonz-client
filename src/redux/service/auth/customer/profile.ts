@@ -1,12 +1,14 @@
+// profileApi.ts
 import baseApi from "@/redux/api/baseApi";
-export interface UserProfileResponse {
+
+// Generic response wrapper
+export interface ApiResponse<T> {
   status: boolean;
   message: string;
-  data: {
-    user: User;
-  };
+  data: T;
 }
 
+// User object (same structure)
 export interface User {
   id: string;
   name: string;
@@ -17,7 +19,7 @@ export interface User {
   isEmailVerified: boolean;
   isDeleted: boolean;
   lang: string;
-  role: "CUSTOMER" | "ADMIN" | "SELLER"; // extend if needed
+  role: "CUSTOMER" | "ADMIN" | "SELLER";
   createdAt: string;
   updatedAt: string;
   dob: string | null;
@@ -44,13 +46,37 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+// ✅ GET response: data = { user: User }
+export interface GetUserProfileResponse {
+  status: boolean;
+  message: string;
+  data: {
+    user: User;
+  };
+}
+
+// ✅ UPDATE response: data = User (direct)
+export interface UpdateProfileResponse {
+  status: boolean;
+  message: string;
+  data: User;
+}
+
+// Endpoints
 export const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-getUserProfile: builder.query<UserProfileResponse, void>({
-  query: () => "/user",
-})
+    getUserProfile: builder.query<GetUserProfileResponse, void>({
+      query: () => "/user",
+    }),
 
+    updateProfile: builder.mutation<UpdateProfileResponse, FormData>({
+      query: (formData) => ({
+        url: "/user/updateProfile",
+        method: "PATCH",
+        body: formData,
+      }),
+    }),
   }),
 });
 
-export const { useGetUserProfileQuery } = profileApi;
+export const { useGetUserProfileQuery, useUpdateProfileMutation } = profileApi;

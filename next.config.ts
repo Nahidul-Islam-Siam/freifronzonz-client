@@ -2,15 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // ✅ Allow ALL remote images (not safe for production!)
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "**",
+        protocol: "http",
+        hostname: "**", // matches any domain over HTTP
       },
       {
-        protocol: "http", // Allow HTTP protocol for localhost
-        hostname: "localhost",
-        port: "5000", // Specify the port your local server is running on
+        protocol: "https",
+        hostname: "**", // matches any domain over HTTPS
       },
     ],
   },
