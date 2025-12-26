@@ -7,10 +7,14 @@
 import { Form, Input, Upload, message, Select, Spin } from "antd";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
 import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
-import { useGetProductByIdQuery } from "@/redux/service/admin/productApi";
+import {
+  useGetProductByIdQuery,
+  useUpdateProductMutation,
+} from "@/redux/service/admin/productApi";
+import Swal from "sweetalert2";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -22,25 +26,21 @@ export default function EditProductPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const params = useParams();
-  
   const productId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  console.log(productId);
-  
-  
   // ✅ Real API calls
-  const { data: productData , isLoading} = useGetProductByIdQuery(productId || '', { skip: !productId });
-  const { data: categoryData } = useGetCategoryListQuery();
-  const { data: brandData } = useGetBrandListQuery();
+  const { data: productData, isLoading: productLoading } =
+    useGetProductByIdQuery(productId || "", { skip: !productId });
+  const { data: categoryData, isLoading: categoryLoading } =
+    useGetCategoryListQuery();
+  const { data: brandData, isLoading: brandLoading } = useGetBrandListQuery();
+  const [updateProduct] = useUpdateProductMutation();
 
-  console.log(productData);
-  
-  
   const product = productData?.data;
   const categories = categoryData?.data?.category || [];
   const brands = brandData?.data?.brand || [];
-  
 
+  const isLoading = productLoading || categoryLoading || brandLoading;
 
   // ✅ Initialize form with real API data
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function EditProductPage() {
 
       // Set image previews
       setPreviewUrls(
-        product.images.map(img => `http://localhost:4200/${img}`)
+        product.images.map((img) => `http://localhost:4200/${img}`)
       );
     }
   }, [product, form]);
@@ -96,16 +96,16 @@ export default function EditProductPage() {
       message.error("Product ID is required");
       return;
     }
-    
-    if (productImageFiles.length === 0 && previewUrls.length === 0) {
-      message.error("Please upload at least one product image");
-      return;
-    }
+
+    // if (productImageFiles.length === 0 && previewUrls.length === 0) {
+    //   message.error("Please upload at least one product image");
+    //   return;
+    // }
 
     setIsSubmitting(true);
 
     try {
-      // ✅ Build the data payload
+      // ✅ Build the data payload exactly as your backend expects
       const dataPayload = {
         name: values.productName,
         shortDes: values.shortDescription,
@@ -118,26 +118,41 @@ export default function EditProductPage() {
         quantity: values.totalProduct,
         categoryId: values.category,
         brandId: values.brandName,
-        tag: values.tag || null,
+        tag: values.tag || "", // ✅ Changed from null to empty string
       };
 
-      // ✅ Create FormData
+      // ✅ Create FormData with data as JSON string
       const formData = new FormData();
       formData.append("data", JSON.stringify(dataPayload));
-      
+
       // ✅ Append new images (if any)
       for (let i = 0; i < productImageFiles.length; i++) {
         formData.append("images", productImageFiles[i]);
       }
 
-      // ✅ Here you would call your update mutation
-      console.log("Update payload:", formData);
-      
-      message.success("Product updated successfully!");
-      router.push("/dashboard/all-product");
-      
+      // ✅ Call the actual update mutation
+      const result = await updateProduct({ id: productId, formData }).unwrap();
+
+      if (result.status === true) {
+        Swal.fire({
+          icon: "success",
+          title: result.message || "Product updated successfully!",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        router.push("/dashboard/all-product");
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: result.message || "Failed to update product.",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
     } catch (error: any) {
-      message.error("Failed to update product.");
+      const errorMessage =
+        error?.data?.message || error?.message || "Failed to update product.";
+      message.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -155,7 +170,7 @@ export default function EditProductPage() {
     return (
       <div className="p-6 mx-auto ant-something rounded-xl">
         <div className="text-center text-red-500">Product not found</div>
-        <button 
+        <button
           onClick={() => router.push("/dashboard/all-product")}
           className="mt-4 bg-[#AF6900] text-white px-4 py-2 rounded"
         >
@@ -329,6 +344,7 @@ export default function EditProductPage() {
                 name="stockStatus"
                 value="inStock"
                 className="mr-2"
+                defaultChecked={product?.stock}
               />
               <label htmlFor="inStock" className="text-sm font-medium">
                 In Stock
@@ -341,6 +357,7 @@ export default function EditProductPage() {
                 name="stockStatus"
                 value="outOfStock"
                 className="mr-2"
+                defaultChecked={!product?.stock}
               />
               <label htmlFor="outOfStock" className="text-sm font-medium">
                 Out of Stock
@@ -367,10 +384,9 @@ export default function EditProductPage() {
         {/* Product Main Image */}
         <Form.Item
           label={
-            <span className="text-[#A7997D] font-medium">Product Images *</span>
+            <span className="text-[#A7997D] font-medium">Product Images</span>
           }
           name="productImage"
-          rules={[{ required: true, message: "Please upload product images" }]}
         >
           <div className="space-y-4">
             {/* Previews */}
