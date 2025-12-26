@@ -1,79 +1,65 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
-import { Upload, message } from "antd";
-import Image from "next/image";
+import { useState} from "react";
+import { message } from "antd";
 import CategoryTable from "./CategoryTable";
-import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
+import { 
+  useGetCategoryListQuery, 
+  useCreateCategoryMutation 
+} from "@/redux/service/admin/categoryApi";
+import Swal from "sweetalert2";
 
 export default function CategoryManagement() {
   const [categoryName, setCategoryName] = useState("");
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [categoryDes, setCategoryDes] = useState(""); // ✅ description field
 
   // ✅ Use real data from API
   const { data: categoriesResponse, isLoading, isError, refetch } = useGetCategoryListQuery();
-
-  // ✅ Extract categories safely
   const categories = categoriesResponse?.data?.category || [];
 
-  // Cleanup preview URL on unmount
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  const [createCategory] = useCreateCategoryMutation();
 
-  // ✅ Simulate add for now (replace with mutation later)
-  const handleAddCategory = () => {
+  // ✅ Add category with only name + des
+  const handleAddCategory = async () => {
     if (!categoryName.trim()) {
       message.error("Category name is required");
       return;
     }
-    if (!logoFile) {
-      message.error("Logo is required");
+    if (!categoryDes.trim()) {
+      message.error("Description is required");
       return;
     }
 
-    // TODO: Replace this with real API mutation
-    message.success("Category added successfully!");
-    setCategoryName("");
-    setLogoFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+    // ✅ Build FormData with ONLY allowed fields
+    const formData = new FormData();
+    formData.append("name", categoryName.trim());
+    formData.append("des", categoryDes.trim());
+
+    try {
+      const res = await createCategory(formData).unwrap();
+      
+      if (res.status) {
+ Swal.fire({
+          icon: "success",
+          title: "Added!",
+          text: res.message || "Category has been added successfully.",
+          confirmButtonColor: "#AF6900",
+          timer: 2000,
+          showConfirmButton: false,
+        }); 
+        // ✅ Reset form
+        setCategoryName("");
+        setCategoryDes("");
+        // ✅ Refresh list
+        refetch();
+      } else {
+        message.error(res.message || "Failed to add category.");
+      }
+    } catch (error: any) {
+      const errorMsg = error?.data?.message || error?.message || "An error occurred while adding the category.";
+      message.error(errorMsg);
     }
-
-    // ✅ Refetch to get new category from backend
-    refetch();
-  };
-
-  const handleFileChange = (info: any) => {
-    const file = info.file.originFileObj;
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      message.error("File must be smaller than 10MB");
-      return;
-    }
-    if (!file.type.match("image/(png|jpeg|jpg)")) {
-      message.error("Only PNG/JPG files allowed");
-      return;
-    }
-
-    // Revoke old preview
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-
-    setLogoFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    message.success("File uploaded");
-  };
-
-  const handleRemoveLogo = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setLogoFile(null);
-    setPreviewUrl(null);
   };
 
   // ✅ Loading & Error States
@@ -109,6 +95,7 @@ export default function CategoryManagement() {
           </h2>
 
           <div className="space-y-4">
+            {/* Category Name */}
             <div>
               <label className="block text-sm md:text-base text-[#4E4E4A] mb-1 font-roboto font-medium">
                 Category Name *
@@ -122,89 +109,26 @@ export default function CategoryManagement() {
               />
             </div>
 
+            {/* Description */}
             <div>
               <label className="block text-sm md:text-base text-[#4E4E4A] mb-1 font-roboto font-medium">
-                Category Logo *
+                Description *
               </label>
-              
-              {!previewUrl ? (
-                <Upload.Dragger
-                  name="logo"
-                  maxCount={1}
-                  accept=".png,.jpg,.jpeg"
-                  onChange={handleFileChange}
-                  showUploadList={false}
-                  className="border-dashed rounded-[14px] border border-[#D1D5DC] bg-white"
-                >
-                  <div className="p-6 text-center justify-center flex flex-col items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 48 48"
-                      fill="none"
-                    >
-                      <path
-                        d="M24 6V30"
-                        stroke="#A7997D"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M34 16L24 6L14 16"
-                        stroke="#A7997D"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M42 30V38C42 39.0609 41.5786 40.0783 40.8284 40.8284C40.0783 41.5786 39.0609 42 38 42H10C8.93913 42 7.92172 41.5786 7.17157 40.8284C6.42143 40.0783 6 39.0609 6 38V30"
-                        stroke="#A7997D"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <p className="text-gray-600 font-roboto mt-2">
-                      Click to upload images
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1 font-roboto">
-                      PNG, JPG up to 10MB
-                    </p>
-                  </div>
-                </Upload.Dragger>
-              ) : (
-                <div className="border rounded-[14px] border-[#D1D5DC] bg-white p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Image
-                        width={48}
-                        height={48}
-                        src={previewUrl}
-                        alt="Preview"
-                        className="h-12 w-12 object-contain"
-                      />
-                      <span className="text-sm text-gray-600 font-roboto">
-                        {logoFile?.name}
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleRemoveLogo}
-                      className="text-red-500 hover:text-red-700 font-roboto text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              )}
+              <textarea
+                value={categoryDes}
+                onChange={(e) => setCategoryDes(e.target.value)}
+                className="w-full p-2 border rounded-md font-roboto border-[#D9D9D9] bg-white"
+                placeholder="Enter category description"
+                rows={3}
+              />
             </div>
 
+            {/* ✅ Add Button */}
             <button
               className="w-full mt-2 bg-[#AF6900] text-white py-4 rounded-md font-roboto"
               onClick={handleAddCategory}
             >
-              Add
+              Add Category
             </button>
           </div>
         </div>
