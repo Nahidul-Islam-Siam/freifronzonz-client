@@ -40,7 +40,7 @@ const productData: ProductRecord[] = Array.from({ length: 12 }, (_, i) => ({
   available: 15,
   price: 600,
   totalSalesAmount: 23300,
-}));
+})); 
 
 export default function AllProductList({
   currentPage,

@@ -6,6 +6,7 @@ export interface ApiResponse<T> {
   status: boolean;
   message: string;
   data: T;
+  success: boolean;
 }
 
 // ✅ Brand item (similar to Category, but separate type)

@@ -5,11 +5,19 @@ import { useState, useEffect } from "react";
 import { Upload, message } from "antd";
 import Image from "next/image";
 import BrandTable from "./BrandTable";
-import { useGetBrandListQuery, useCreateBrandMutation } from "@/redux/service/admin/brandApi";
-import Swal from 'sweetalert2';
+import {
+  useGetBrandListQuery,
+  useCreateBrandMutation,
+} from "@/redux/service/admin/brandApi";
+import Swal from "sweetalert2";
 
 export default function BrandManagement() {
-  const { data: brandsResponse, isLoading, isError, refetch } = useGetBrandListQuery();
+  const {
+    data: brandsResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetBrandListQuery();
   const [createBrand] = useCreateBrandMutation();
 
   const brands = brandsResponse?.data?.brand || [];
@@ -17,6 +25,7 @@ export default function BrandManagement() {
   const [brandName, setBrandName] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -25,104 +34,97 @@ export default function BrandManagement() {
     };
   }, [previewUrl]);
 
-  // ✅ Handle Add Brand with SweetAlert2 (consistent with your app)
-  const handleAddBrand = () => {
-    let nameInput: HTMLInputElement;
-    let fileInput: HTMLInputElement;
+  // ✅ Handle Add Brand with Ant Design validation (no SweetAlert)
+  const handleAddBrand = async () => {
+    // Validation
+    if (!brandName.trim()) {
+      message.error("Brand name is required");
+      return;
+    }
+    if (!logoFile) {
+      message.error("Logo is required");
+      return;
+    }
 
-    Swal.fire({
-      title: 'Add New Brand',
-      html: `
-        <input 
-          id="swal-name" 
-          class="swal2-input" 
-          placeholder="Brand Name"
-        >
-        <div class="mt-3">
-          <label class="block text-sm md:text-base text-[#4E4E4A] mb-1 font-roboto font-medium">
-            Brand Logo *
-          </label>
-          <input 
-            id="swal-file" 
-            type="file" 
-            accept=".png,.jpg,.jpeg"
-            class="w-full p-2 border rounded-md font-roboto border-[#D9D9D9] bg-white"
-          />
-        </div>
-      `,
-      focusConfirm: false,
-      confirmButtonText: 'Add Brand',
-      confirmButtonColor: '#AF6900',
-      showCancelButton: true,
-      cancelButtonColor: '#d33',
-      preConfirm: () => {
-        nameInput = document.getElementById('swal-name') as HTMLInputElement;
-        fileInput = document.getElementById('swal-file') as HTMLInputElement;
+    // Validate file
+    if (logoFile.size > 10 * 1024 * 1024) {
+      message.error("File must be smaller than 10MB");
+      return;
+    }
+    if (!logoFile.type.match("image/(png|jpeg|jpg)")) {
+      message.error("Only PNG/JPG files allowed");
+      return;
+    }
 
-        const name = nameInput?.value.trim();
-        const file = fileInput?.files?.[0];
+    // Build FormData
+    const formData = new FormData();
+    const payload = { name: brandName.trim() };
+    formData.append("data", JSON.stringify(payload));
+    formData.append("img", logoFile);
 
-        if (!name) {
-          Swal.showValidationMessage('Brand name is required');
-          return false;
-        }
-        if (!file) {
-          Swal.showValidationMessage('Logo is required');
-          return false;
-        }
+    setIsSubmitting(true);
 
-        // Validate file
-        if (file.size > 10 * 1024 * 1024) {
-          Swal.showValidationMessage('File must be smaller than 10MB');
-          return false;
-        }
-        if (!file.type.match("image/(png|jpeg|jpg)")) {
-          Swal.showValidationMessage('Only PNG/JPG files allowed');
-          return false;
-        }
-
-        // ✅ Build FormData with data + img
-        const formData = new FormData();
-        const payload = { name }; // des is null for now
-        formData.append('data', JSON.stringify(payload));
-        formData.append('img', file);
-
-        return formData;
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed && result.value) {
-        const formData = result.value;
-
+    try {
+      const res = await createBrand(formData).unwrap();
+      if (res?.status === true) {
         Swal.fire({
-          title: 'Adding...',
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          didOpen: () => Swal.showLoading(),
+          icon: "success",
+          title: `${res.message} || Brand added successfully!`,
+          showConfirmButton: false,
+          timer: 1500,
         });
-
-        try {
-          const res = await createBrand(formData).unwrap();
-          Swal.fire({
-            icon: 'success',
-            title: 'Added!',
-            text: res.message || 'Brand added successfully.',
-            confirmButtonColor: '#AF6900',
-            timer: 2000,
-            showConfirmButton: false,
-          });
-          refetch(); // ✅ Refresh list
-        } catch (error: any) {
-          const message = error?.data?.message || error?.message || 'Failed to add brand.';
-          Swal.fire({ icon: 'error', title: 'Error', text: message, confirmButtonColor: '#d33' });
-        }
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: res?.message || "Failed to add brand.",
+          confirmButtonColor: "#d33",
+        });
       }
-    });
+      // Reset form
+      setBrandName("");
+      setLogoFile(null);
+      setPreviewUrl(null);
+
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message || error?.message || "Failed to add brand.";
+      message.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFileChange = (info: any) => {
+    const file = info.file.originFileObj;
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      message.error("File must be smaller than 10MB");
+      return;
+    }
+    if (!file.type.match("image/(png|jpeg|jpg)")) {
+      message.error("Only PNG/JPG files allowed");
+      return;
+    }
+
+    setLogoFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleRemoveLogo = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setLogoFile(null);
+    setPreviewUrl(null);
   };
 
   if (isLoading) {
     return (
       <div className="p-6 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 font-marcellus">Brand Management</h1>
+        <h1 className="text-2xl font-bold mb-6 font-marcellus">
+          Brand Management
+        </h1>
         <p>Loading brands...</p>
       </div>
     );
@@ -131,7 +133,9 @@ export default function BrandManagement() {
   if (isError) {
     return (
       <div className="p-6 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 font-marcellus">Brand Management</h1>
+        <h1 className="text-2xl font-bold mb-6 font-marcellus">
+          Brand Management
+        </h1>
         <p className="text-red-500">Failed to load brands.</p>
       </div>
     );
@@ -145,7 +149,7 @@ export default function BrandManagement() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Add Brand Form */}
-        <div className=" p-5 ">
+        <div className="p-5">
           <h2 className="text-lg font-semibold mb-4 font-roboto">
             Add New Brand
           </h2>
@@ -168,30 +172,14 @@ export default function BrandManagement() {
               <label className="block text-sm md:text-base text-[#4E4E4A] mb-1 font-roboto font-medium">
                 Brand Logo *
               </label>
-              
+
               {/* Upload Area */}
               {!previewUrl ? (
                 <Upload.Dragger
                   name="logo"
                   maxCount={1}
                   accept=".png,.jpg,.jpeg"
-                  onChange={(info: any) => {
-                    const file = info.file.originFileObj;
-                    if (!file) return;
-
-                    if (file.size > 10 * 1024 * 1024) {
-                      message.error("File must be smaller than 10MB");
-                      return;
-                    }
-                    if (!file.type.match("image/(png|jpeg|jpg)")) {
-                      message.error("Only PNG/JPG files allowed");
-                      return;
-                    }
-
-                    setLogoFile(file);
-                    setPreviewUrl(URL.createObjectURL(file));
-                    message.success("File uploaded");
-                  }}
+                  onChange={handleFileChange}
                   showUploadList={false}
                   className="border-dashed rounded-[14px] border border-[#D1D5DC] bg-white"
                 >
@@ -250,11 +238,7 @@ export default function BrandManagement() {
                       </span>
                     </div>
                     <button
-                      onClick={() => {
-                        if (previewUrl) URL.revokeObjectURL(previewUrl);
-                        setLogoFile(null);
-                        setPreviewUrl(null);
-                      }}
+                      onClick={handleRemoveLogo}
                       className="text-red-500 hover:text-red-700 font-roboto text-sm"
                     >
                       Delete
@@ -267,14 +251,15 @@ export default function BrandManagement() {
             <button
               className="w-full mt-2 bg-[#AF6900] text-white py-4 rounded-md font-roboto"
               onClick={handleAddBrand}
+              disabled={isSubmitting}
             >
-              Add
+              {isSubmitting ? "Adding..." : "Add"}
             </button>
           </div>
         </div>
 
         {/* Brand List */}
-        <div className=" p-5">
+        <div className="p-5">
           <h2 className="text-lg font-semibold mb-4 font-roboto">Brand List</h2>
           <BrandTable brands={brands} />
         </div>
