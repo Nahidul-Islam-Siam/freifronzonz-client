@@ -6,7 +6,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
 import Image from "next/image";
 import ProductCard from "../cards/ProductCard";
-import { products } from "../cards/CategorySection";
+import { products } from "../cards/ProductsDummyData";
+
 
 const BOTTLE_SIZES = ["150ml", "375ml", "750ml", "1.5L", "3L"];
 

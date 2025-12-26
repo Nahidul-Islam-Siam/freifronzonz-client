@@ -17,8 +17,9 @@ export default function Navbar() {
   const router = useRouter();
   const dispatch = useDispatch();
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
-  const role = useSelector((state: RootState) => state.auth.user?.role);
-
+  const role = useSelector((state: RootState) => state?.auth.user?.role);
+// ✅ Add this line
+const cartCount = useSelector((state: RootState) => state?.cart?.count);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -171,14 +172,21 @@ export default function Navbar() {
             <div className="flex items-center gap-4 ml-auto lg:ml-6">
               <div className="flex items-center gap-2">
                 {/* Cart (always visible) */}
-                <Link href="/cart">
-                  <button className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
-                    <ShoppingCart className="w-5 h-5 text-gray-700" />
-                    <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      0
-                    </span>
-                  </button>
-                </Link>
+    <Link href="/cart">
+  <button 
+    className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+    aria-label={`Shopping cart, ${cartCount} items`}
+  >
+    <ShoppingCart 
+      className={`w-5 h-5 ${cartCount > 0 ? 'text-amber-700' : 'text-gray-700'}`} 
+    />
+    {cartCount > 0 && (
+      <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-fadeIn">
+        {cartCount}
+      </span>
+    )}
+  </button>
+</Link>
 
                 {/* ✅ Auth UI with Dropdown */}
                 {accessToken ? (

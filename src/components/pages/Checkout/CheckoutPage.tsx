@@ -2,33 +2,17 @@
 "use client";
 
 import { useState } from "react";
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
+import { removeFromCart, updateQuantity } from '@/redux/slices/cartSlice';
+
+import Link from "next/link";
 import CartItemsList from "../Cart/CartItemsList";
 
-
-// Mock cart data
-const mockCartItems = [
-  {
-    id: 1,
-    name: "Red Wine",
-    volume: "400ml",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
-    price: 150.0,
-    quantity: 1,
-    image: "/images/c1.png",
-  },
-  {
-    id: 2,
-    name: "Whiskey",
-    volume: "400ml",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
-    price: 450.25,
-    quantity: 1,
-    image: "/images/c2.png",
-  },
-];
-
 export default function CheckoutPage() {
-  const [cartItems, setCartItems] = useState(mockCartItems);
+  // ✅ Get cart data from Redux store
+  const { items, total } = useSelector((state: RootState) => state.cart);
+  const dispatch = useDispatch<AppDispatch>();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -41,17 +25,14 @@ export default function CheckoutPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const updateQuantity = (id: number, newQty: number) => {
-    if (newQty < 1) return;
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQty } : item
-      )
-    );
+  // ✅ Cart management functions
+  const handleUpdateQuantity = (id: number, quantity: number) => {
+    if (quantity < 1) return;
+    dispatch(updateQuantity({ id, quantity }));
   };
 
-  const removeFromCart = (id: number) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+  const handleRemoveItem = (id: number) => {
+    dispatch(removeFromCart(id));
   };
 
   // Handle input changes
@@ -83,9 +64,34 @@ export default function CheckoutPage() {
       return;
     }
 
+    // ✅ In a real app, you'd send this to your backend along with cart items
+    console.log("Order submitted:", {
+      customer: formData,
+      cartItems: items,
+      total: total
+    });
+
     alert("Order placed successfully!");
-    console.log("Form submitted:", formData);
+    
+    // ✅ Optional: Clear cart after successful order
+    // dispatch(clearCart());
   };
+
+  // ✅ Redirect if cart is empty
+  if (items.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+        <p className="text-gray-500 mb-6">Add some items to your cart before checking out.</p>
+        <Link 
+          href="/shop" 
+          className="bg-[#AF6900] text-white px-6 py-3 rounded-md hover:bg-[#9E845C] transition-colors"
+        >
+          Continue Shopping
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
@@ -96,9 +102,9 @@ export default function CheckoutPage() {
         {/* Left: Cart Items (50%) */}
         <div className="lg:w-1/2 w-full">
           <CartItemsList
-            items={cartItems}
-            onUpdateQuantity={updateQuantity}
-            onRemoveItem={removeFromCart}
+            items={items}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
             showSummary={true}
           />
         </div>
@@ -220,6 +226,25 @@ export default function CheckoutPage() {
                 {errors.address && (
                   <p className="text-red-500 text-xs mt-1">{errors.address}</p>
                 )}
+              </div>
+
+              {/* Order Summary */}
+              <div className="border-t pt-4 mb-6">
+                <h3 className="font-bold text-lg mb-3">Order Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-[#1F1F1F]">Subtotal:</span>
+                    <span className="font-bold">${total.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#1F1F1F]">Shipping:</span>
+                    <span className="font-bold">$0.00</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                    <span>Total:</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Submit Button */}
