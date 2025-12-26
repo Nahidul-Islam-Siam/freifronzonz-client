@@ -1,6 +1,7 @@
 // redux/service/admin/productApi.ts
 import baseApi from "@/redux/api/baseApi";
 
+
 // Generic wrapper
 export interface ApiResponse<T> {
   status: boolean;
@@ -93,8 +94,17 @@ export interface ProductQueryParams {
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // GET product list (returns nested category/brand)
-    getProductList: builder.query<GetProductListResponse, string>({
-      query: (url) => url,
+    // getProductList: builder.query<GetProductListResponse, string>({
+    //   query: (url) => url,
+    //   providesTags: ["product"],
+    // }),
+
+    getProductList: builder.query<GetProductListResponse, ProductQueryParams>({
+      query: (params) => ({
+        url: "/product",
+        method: "GET",
+        params: { ...params },
+      }),
       providesTags: ["product"],
     }),
 

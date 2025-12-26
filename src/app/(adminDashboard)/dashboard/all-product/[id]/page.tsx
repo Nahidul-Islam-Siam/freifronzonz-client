@@ -1,35 +1,100 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/add-product/page.tsx
+// app/edit-product/page.tsx
 
 "use client";
 
 import { Form, Input, Upload, message, Select } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
-import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
-import Swal from "sweetalert2";
-import { useCreateProductMutation } from "@/redux/service/admin/productApi"; // ✅ Add this import
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-export default function AddProductPage() {
+// Mock category and brand data (since we're removing API)
+const mockCategories = [
+  { id: "1", name: "Red Wine" },
+  { id: "2", name: "White Wine" },
+  { id: "3", name: "Champagne" },
+  { id: "4", name: "Sparkling" },
+  { id: "5", name: "Rosé Wine" },
+  { id: "6", name: "Spirit Wine" },
+];
+
+const mockBrands = [
+  { id: "1", name: "VESEVO" },
+  { id: "2", name: "MOËT" },
+  { id: "3", name: "BAREFOOT" },
+  { id: "4", name: "VALDO" },
+  { id: "5", name: "JACK DANIEL'S" },
+  { id: "6", name: "PERRIER-JOUËT" },
+  { id: "7", name: "HIGHLAND PARK" },
+  { id: "8", name: "VEUVE CLICQUOT" },
+  { id: "9", name: "CHÂTEAU MARGAUX" },
+  { id: "10", name: "CONCHA Y TORO" },
+  { id: "11", name: "HENNESSY" },
+  { id: "12", name: "MUMM" },
+  { id: "13", name: "CHÂTEAU D'ESCLANS" },
+  { id: "14", name: "19 CRIMES" },
+  { id: "15", name: "KORBEL" },
+  { id: "16", name: "GREY GOOSE" },
+  { id: "17", name: "CLOUDY BAY" },
+  { id: "18", name: "DOM PÉRIGNON" },
+];
+
+// Mock product data for editing
+const mockProduct = {
+  id: "694e0f563be44688d00bc842",
+  name: "Donec a Fortress Elegance",
+  shortDes: "This short des of Fortress wine",
+  des: "Alcohol is good for health. It give us strenght both mental and slightly physically",
+  images: [
+    "images-1766723414278-911254133.png"
+  ],
+  size: "500ml",
+  price: "200",
+  discount: true,
+  discountPercent: "10",
+  stock: true,
+  quantity: "25",
+  categoryId: "1",
+  brandId: "5",
+  tag: null,
+};
+
+export default function EditProductPage() {
   const [form] = Form.useForm();
   const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // ✅ Add product mutation
-  const [createProduct] = useCreateProductMutation();
+  // Get product ID from URL (if needed for real implementation)
+  const productId = searchParams.get('id') || mockProduct.id;
 
-  const { data: categoryData } = useGetCategoryListQuery();
-  const { data: brandData } = useGetBrandListQuery();
+  // Initialize form with mock product data
+  useEffect(() => {
+    form.setFieldsValue({
+      productName: mockProduct.name,
+      shortDescription: mockProduct.shortDes,
+      description: mockProduct.des,
+      bottleSize: mockProduct.size,
+      price: mockProduct.price,
+      offer: mockProduct.discount ? mockProduct.discountPercent : "",
+      stockStatus: mockProduct.stock ? "inStock" : "outOfStock",
+      totalProduct: mockProduct.quantity,
+      category: mockProduct.categoryId,
+      brandName: mockProduct.brandId,
+      tag: mockProduct.tag || "",
+    });
 
-  const category = categoryData?.data.category || [];
-  const brand = brandData?.data.brand || [];
+    // Set image previews (assuming images are served from localhost:4200)
+    setPreviewUrls(
+      mockProduct.images.map(img => `http://localhost:4200/${img}`)
+    );
+  }, [form]);
 
   const handleProductImageChange = ({ fileList }: any) => {
     const files = fileList
@@ -57,7 +122,7 @@ export default function AddProductPage() {
   };
 
   const onFinish = async (values: any) => {
-    if (productImageFiles.length === 0) {
+    if (productImageFiles.length === 0 && previewUrls.length === 0) {
       message.error("Please upload at least one product image");
       return;
     }
@@ -65,62 +130,21 @@ export default function AddProductPage() {
     setIsSubmitting(true);
 
     try {
-      // ✅ Build data object exactly as your backend expects
-      const dataPayload = {
-        name: values.productName,
-        shortDes: values.shortDescription, // ✅ Added short description
-        des: values.description,
-        size: values.bottleSize,
-        price: values.price,
-        discount: values.offer ? values.offer.trim() !== "" : false,
-        discountPercent: values.offer || "0",
-        stock: values.stockStatus === "inStock" ? true : false,
-        quantity: values.totalProduct,
-        categoryId: values.category,
-        brandId: values.brandName,
-        // tag will be handled by backend (optional)
-      };
+      // ✅ Simulate form submission (no API call)
+      console.log("Editing product with values:", values);
+      console.log("Product images:", productImageFiles);
 
-      // ✅ Create FormData with data as JSON string + image files
-      const formData = new FormData();
-      formData.append("data", JSON.stringify(dataPayload));
-
-      // ✅ Append all image files (backend expects multiple "images" fields)
-      for (let i = 0; i < productImageFiles.length; i++) {
-        formData.append("images", productImageFiles[i]);
-      }
-
-      // ✅ Send to backend
-      const res = await createProduct(formData).unwrap();
-
-      if (res.status === true) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: res?.message || "Product added successfully.",
-          confirmButtonColor: "#AF6900",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        // ✅ Redirect to all products page after success
-        router.push("/dashboard/all-product");
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: res?.message || "Failed to add product.",
-          confirmButtonColor: "#d33",
-        });
-      }
-
-      // ✅ Reset form
-      form.resetFields();
-      setProductImageFiles([]);
-      setPreviewUrls([]);
+      // ✅ Show success message
+      message.success("Product updated successfully!");
+      
+      // ✅ Reset form after success (optional)
+      // form.resetFields();
+      
+      // ✅ Redirect to all products page
+      router.push("/dashboard/all-product");
+      
     } catch (error: any) {
-      const errorMessage =
-        error?.data?.message || error?.message || "Failed to add product.";
-      message.error(errorMessage);
+      message.error("Failed to update product.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,7 +153,7 @@ export default function AddProductPage() {
   return (
     <div className="p-6 mx-auto ant-something rounded-xl">
       <h1 className="text-2xl font-semibold text-[#A7997D] mb-6">
-        Add New Product
+        Edit Product
       </h1>
 
       <Form
@@ -154,7 +178,7 @@ export default function AddProductPage() {
           />
         </Form.Item>
 
-        {/* ✅ Short Description Field (NEW) */}
+        {/* Short Description Field */}
         <Form.Item
           label={
             <span className="text-[#A7997D] font-medium">
@@ -187,7 +211,7 @@ export default function AddProductPage() {
               placeholder="Winery"
               className="rounded-[8px] border border-[#D9D9D9] bg-white"
             >
-              {brand.map((br) => (
+              {mockBrands.map((br) => (
                 <Option key={br.id} value={br.id}>
                   {br.name}
                 </Option>
@@ -208,7 +232,7 @@ export default function AddProductPage() {
               placeholder="Red Wine"
               className="rounded-[8px] border border-[#D9D9D9] bg-white"
             >
-              {category.map((cat) => (
+              {mockCategories.map((cat) => (
                 <Option key={cat.id} value={cat.id}>
                   {cat.name}
                 </Option>
@@ -401,13 +425,20 @@ export default function AddProductPage() {
         </Form.Item>
 
         {/* Submit Button */}
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-8 gap-4">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/all-product")}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="bg-[#AF6900] hover:bg-[#9a5d00] text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? "Adding..." : "Add Product"}
+            {isSubmitting ? "Updating..." : "Update Product"}
           </button>
         </div>
       </Form>

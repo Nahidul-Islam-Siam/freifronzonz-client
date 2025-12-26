@@ -1,17 +1,19 @@
-// components/dashboard/AllProductList.tsx
-
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Card, Table, Dropdown, Button, Modal } from "antd";
+import { Card, Table, Dropdown, Button, Modal, Skeleton } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useDeleteProductMutation, useGetProductListQuery } from "@/redux/service/admin/productApi";
+import Swal from "sweetalert2";
 
 /** Interface for product data */
 interface ProductRecord {
-  key: number;
-  productId: number;
+  key: string;
+  id: string;
+  productId: string;
   productName: string;
   brandName: string;
   category: string;
@@ -20,6 +22,7 @@ interface ProductRecord {
   available: number;
   price: number;
   totalSalesAmount: number;
+  images: string[];
 }
 
 /** Props interface */
@@ -28,28 +31,56 @@ interface AllProductListProps {
   setCurrentPage: (page: number) => void;
 }
 
-// Mock data generation
-const productData: ProductRecord[] = Array.from({ length: 12 }, (_, i) => ({
-  key: i,
-  productId: 12345,
-  productName: "Basket with handles",
-  brandName: "Basket with handles",
-  category: "Whiskey",
-  totalProduct: 45,
-  totalSales: 30,
-  available: 15,
-  price: 600,
-  totalSalesAmount: 23300,
-})); 
-
 export default function AllProductList({
   currentPage,
   setCurrentPage,
 }: AllProductListProps) {
-  const [selectedProduct, setSelectedProduct] = useState<ProductRecord | null>(
-    null
-  );
+  const [selectedProduct, setSelectedProduct] = useState<ProductRecord | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [deleteProduct] = useDeleteProductMutation();
+  
+  // ✅ Load ALL products at once (no pagination in API)
+  const {  data: productsResponse, isLoading, isError } = useGetProductListQuery({ 
+    page: 1, 
+    limit: 1000 // Load all products
+  });
+
+  const [allTransformedProducts, setAllTransformedProducts] = useState<ProductRecord[]>([]);
+  
+  // ✅ Transform all products once
+  useEffect(() => {
+    if (productsResponse?.data?.products) {
+      const transformed = productsResponse.data.products.map((product: any) => ({
+        key: product.id,
+        id: product.id,
+        productId: product.id,
+        productName: product.name,
+        brandName: product.brand.name,
+        category: product.category.name,
+        totalProduct: parseInt(product.quantity) || 0,
+        totalSales: 0,
+        available: product.stock ? parseInt(product.quantity) || 0 : 0,
+        price: parseFloat(product.price) || 0,
+        totalSalesAmount: 0,
+        images: product.images || [],
+      }));
+      setAllTransformedProducts(transformed);
+    }
+  }, [productsResponse]);
+
+  // ✅ Frontend pagination
+  const pageSize = 10;
+  const totalPages = Math.ceil(allTransformedProducts.length / pageSize);
+  const paginatedProducts = allTransformedProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+useEffect(() => {
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1);
+  }
+}, [totalPages, currentPage]);
 
   const showDetails = (record: ProductRecord) => {
     setSelectedProduct(record);
@@ -59,6 +90,40 @@ export default function AllProductList({
   const closeModal = () => {
     setIsModalVisible(false);
     setSelectedProduct(null);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      const res = await deleteProduct(productId).unwrap();
+      if (res.status === true) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: res.message || 'Product deleted successfully.',
+          confirmButtonColor: '#AF6900',
+          timer: 2000,
+          showConfirmButton: false,  
+        });
+        // ✅ Force refresh to reload all data
+        window.location.reload();
+      } else {
+        Swal.fire({
+          icon: 'error',  
+          title: 'Error',
+          text: res.message || 'Failed to delete product.',
+          confirmButtonColor: '#d33',
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to delete product.',
+        confirmButtonColor: '#d33',
+      });
+    }
+    closeModal();
   };
 
   // Render Actions Menu
@@ -71,8 +136,19 @@ export default function AllProductList({
             label: "View Details",
             onClick: () => showDetails(record),
           },
-          { key: "2", label: "Edit" },
-          { key: "3", label: "Remove", danger: true },
+          { 
+            key: "2", 
+            label: "Edit",
+            onClick: () => {
+              window.location.href = `/dashboard/all-product/${record.id}`;
+            }
+          },
+          {
+            key: "3",
+            label: "Delete",
+            onClick: () => handleDeleteProduct(record.id),
+            danger: true,
+          },
         ],
       }}
       placement="bottomRight"
@@ -146,6 +222,54 @@ export default function AllProductList({
     },
   ];
 
+  if (isLoading) {
+    return (
+      <Card
+        className="custom-all-product-card"
+        title={
+          <span className="text-lg font-semibold text-[#A7997D]">
+            All Product
+          </span>
+        }
+        style={{
+          borderRadius: "0",
+          border: "none",
+          backgroundColor: "transparent",
+        }}
+        bodyStyle={{
+          padding: 0,
+          backgroundColor: "transparent",
+        }}
+      >
+        <Skeleton active paragraph={{ rows: 5 }} />
+      </Card>
+    );
+  }
+
+  if (isError || !productsResponse?.data) {
+    return (
+      <Card
+        className="custom-all-product-card"
+        title={
+          <span className="text-lg font-semibold text-[#A7997D]">
+            All Product
+          </span>
+        }
+        style={{
+          borderRadius: "0",
+          border: "none",
+          backgroundColor: "transparent",
+        }}
+        bodyStyle={{
+          padding: 20,
+          backgroundColor: "transparent",
+        }}
+      >
+        <div className="text-center text-red-500">Failed to load products</div>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card
@@ -159,7 +283,6 @@ export default function AllProductList({
               width: "100%",
             }}
           >
-            {/* Left: Title */}
             <span
               style={{
                 fontSize: "18px",
@@ -175,32 +298,53 @@ export default function AllProductList({
           borderRadius: "0",
           border: "none",
           backgroundColor: "transparent",
-          overflow: "hidden",
+  overflow: "visible",
+
         }}
         bodyStyle={{
           padding: 0,
           backgroundColor: "transparent",
         }}
       >
-        <div style={{ overflowX: "auto", width: "100%" }}>
-          <Table
-            columns={columns}
-            dataSource={productData}
-            pagination={{
-              current: currentPage,
-              pageSize: 10,
-              total: productData.length,
-              onChange: setCurrentPage,
-              showSizeChanger: false,
-              position: ["bottomCenter"], // Centered pagination
-              hideOnSinglePage: true,
-            }}
-            scroll={{ x: 1000 }}
-            tableLayout="auto"
-            bordered={false}
-            style={{ marginTop: "20px" }}
-          />
-        </div>
+<div style={{ overflowX: "auto", width: "100%" }}>
+  <Table
+    columns={columns}
+    dataSource={paginatedProducts}
+    pagination={false}
+    scroll={{ x: 1000 }}
+  />
+</div>
+
+{/* ✅ Pagination (single wrapper, always visible) */}
+<div className="custom-pagination">
+  <Button
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage(currentPage - 1)}
+  >
+    Prev
+  </Button>
+
+  {Array.from({ length: totalPages || 1 }).map((_, i) => (
+    <Button
+      key={i}
+      type={currentPage === i + 1 ? "primary" : "default"}
+      onClick={() => setCurrentPage(i + 1)}
+    >
+      {i + 1}
+    </Button>
+  ))}
+
+  <Button
+    disabled={currentPage === totalPages || totalPages === 0}
+    onClick={() => setCurrentPage(currentPage + 1)}
+  >
+    Next
+  </Button>
+</div>
+
+{/* )} */}
+
+
 
         {/* --- Global Styles --- */}
         <style jsx global>{`
@@ -259,62 +403,33 @@ export default function AllProductList({
             background-color: #fafafa !important;
           }
 
-          /* Pagination Styling */
-          .custom-all-product-card .ant-pagination {
-            display: flex !important;
-            justify-content: center !important;
-            margin-top: 16px !important;
+          /* Custom Pagination */
+          .custom-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
           }
 
-          .custom-all-product-card .ant-pagination-item-link,
-          .custom-all-product-card .ant-pagination-item a {
-            color: black !important;
-            border-color: #a7997d !important;
+          .custom-pagination .ant-btn-primary {
+            background-color: #a7997d;
+            border-color: #a7997d;
           }
 
-          .custom-all-product-card .ant-pagination-item-active {
-            background-color: #a7997d !important;
-            border-color: #a7997d !important;
-          }
-
-          .custom-all-product-card .ant-pagination-item-active a {
-            color: white !important;
-          }
-
-          .custom-all-product-card .ant-pagination-item:hover a,
-          .custom-all-product-card .ant-pagination-item-link:hover {
-            color: #5e5e5e !important;
-            border-color: #5e5e5e !important;
-          }
-
-          .custom-all-product-card .ant-pagination-prev a,
-          .custom-all-product-card .ant-pagination-next a {
-            color: black !important;
-          }
-
-          .custom-all-product-card .ant-pagination-prev button:disabled,
-          .custom-all-product-card .ant-pagination-next button:disabled {
-            border-color: #ddd !important;
-            color: #ccc !important;
+          .custom-pagination .ant-btn-primary:hover {
+            background-color: #8f8168;
+            border-color: #8f8168;
           }
         `}</style>
       </Card>
 
-      {/* 💡 Modal: Product Details — You can add later if needed */}
-      {/* 💡 Modal: Product Details — EXACT MATCH TO IMAGE */}
+      {/* Product Details Modal */}
       <Modal
         title={
           <div className="flex justify-between items-center w-full bg-white">
             <h3 className="text-lg font-semibold text-gray-800">
               Product Details
             </h3>
-            {/* <button
-              onClick={closeModal}
-              className="text-gray-500 hover:text-gray-700 text-xl"
-              style={{ background: "none", border: "none", cursor: "pointer" }}
-            >
-              ×
-            </button> */}
           </div>
         }
         open={isModalVisible}
@@ -335,7 +450,10 @@ export default function AllProductList({
             {/* Product Image */}
             <div className="flex justify-center">
               <Image
-                src= "/images/p1.png"
+                src={selectedProduct.images[0] 
+                  ? `http://localhost:4200/${selectedProduct.images[0]}`
+                  : "/placeholder.svg"
+                }
                 width={400}
                 height={400}
                 alt="Product"
@@ -351,19 +469,19 @@ export default function AllProductList({
                   <span className="font-medium text-gray-700">
                     Product Name
                   </span>
-                  <span className="text-gray-900">Red Wine</span>
+                  <span className="text-gray-900">{selectedProduct.productName}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
                   <span className="font-medium text-[#A7997D]">Brand Name</span>
-                  <span className="text-gray-900">Basket with handles</span>
+                  <span className="text-gray-900">{selectedProduct.brandName}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
                   <span className="font-medium text-[#A7997D]">Product Id</span>
-                  <span className="text-gray-900">11111111</span>
+                  <span className="text-gray-900">{selectedProduct.productId}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
@@ -371,7 +489,7 @@ export default function AllProductList({
                   <span className="font-medium text-[#A7997D]">
                     Product Categories:
                   </span>
-                  <span className="text-gray-900">Basket with handles</span>
+                  <span className="text-gray-900">{selectedProduct.category}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
@@ -379,7 +497,9 @@ export default function AllProductList({
                   <span className="font-medium text-[#A7997D]">
                     Bottle Size
                   </span>
-                  <span className="text-gray-900">500 ml</span>
+                  <span className="text-gray-900">
+                    {selectedProduct.totalProduct > 0 ? "500 ml" : "N/A"}
+                  </span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
