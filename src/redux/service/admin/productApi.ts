@@ -1,28 +1,46 @@
 // redux/service/admin/productApi.ts
 import baseApi from "@/redux/api/baseApi";
 
-
 // Generic wrapper
 export interface ApiResponse<T> {
   status: boolean;
   message: string;
-  data: T;
+   data: T;
   success: boolean;
 }
 
-// Product interfaces
+// Category and Brand interfaces
 export interface ProductCategory {
   id: string;
   name: string;
+  des: string | null;
+  img: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductBrand {
   id: string;
   name: string;
+  des: string | null;
+  img: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// ✅ Product interface - matches your CREATE response
-export interface Product {
+// Review interface (empty array in your response)
+export interface ProductReview {
+  id: string;
+  rating: number;
+  comment: string;
+  userId: string;
+  productId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ✅ Product interface for GET by ID response
+export interface ProductWithRelations {
   id: string;
   name: string;
   shortDes: string;
@@ -32,25 +50,45 @@ export interface Product {
   price: string;
   discount: boolean;
   discountPercent: string;
-  shippingFee: string; // ✅ Added shippingFee
+  shippingFee: string;
   stock: boolean;
   quantity: string;
-  tag: string | null; // ✅ Added tag (can be null)
-  categoryId: string; // ✅ Direct categoryId (not nested object)
-  brandId: string;    // ✅ Direct brandId (not nested object)
-  creatorId: string;  // ✅ Added creatorId
+  tag: string | null;
+  categoryId: string; // Direct ID (also available in nested category)
+  brandId: string;    // Direct ID (also available in nested brand)
+  creatorId: string;
   createdAt: string;
   updatedAt: string;
-  // ❌ No nested category/brand objects in CREATE response
+  isLoading?: boolean;
+  category: ProductCategory; // ✅ Nested category object
+  brand: ProductBrand;       // ✅ Nested brand object
+  reviews: ProductReview[];  // ✅ Reviews array (currently empty)
 }
 
-// ✅ For LIST response, you have nested category/brand objects
-export interface ProductWithRelations extends Omit<Product, 'categoryId' | 'brandId'> {
-  category: ProductCategory; // ✅ Nested in LIST response
-  brand: ProductBrand;       // ✅ Nested in LIST response
+// Product interface for CREATE response (flat structure)
+export interface Product {
+  id: string;
+  name: string;
+  shortDes: string;
+  des: string;
+  images: string[];
+  size: string;
+  price: string;
+  discount: boolean;
+  discountPercent: string;
+  shippingFee: string;
+  stock: boolean;
+  quantity: string;
+  tag: string | null;
+  categoryId: string;
+  brandId: string;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+  // ❌ No nested category/brand in CREATE response
 }
 
-// Product list response (with nested category/brand)
+// Product list response
 export interface ProductListData {
   total: number;
   page: number;
@@ -58,17 +96,16 @@ export interface ProductListData {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  products: ProductWithRelations[]; // ✅ Use ProductWithRelations for list
+  products: ProductWithRelations[]; // ✅ List also returns nested objects
 }
 
 export type GetProductListResponse = ApiResponse<ProductListData>;
-
-// ✅ CREATE response - uses flat Product (no nested category/brand)
+export type GetProductByIdResponse = ApiResponse<ProductWithRelations>;
 export type CreateProductResponse = ApiResponse<Product>;
 
 // UPDATE response 
 export interface UpdateProductResponseData {
-  updatedProduct: ProductWithRelations; // Assuming update returns nested objects like LIST
+  updatedProduct: ProductWithRelations;
 }
 export type UpdateProductResponse = ApiResponse<UpdateProductResponseData>;
 
@@ -93,12 +130,6 @@ export interface ProductQueryParams {
 // Endpoints
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // GET product list (returns nested category/brand)
-    // getProductList: builder.query<GetProductListResponse, string>({
-    //   query: (url) => url,
-    //   providesTags: ["product"],
-    // }),
-
     getProductList: builder.query<GetProductListResponse, ProductQueryParams>({
       query: (params) => ({
         url: "/product",
@@ -108,7 +139,11 @@ export const productApi = baseApi.injectEndpoints({
       providesTags: ["product"],
     }),
 
-    // ✅ CREATE product (returns flat Product)
+    getProductById: builder.query<GetProductByIdResponse, string>({
+      query: (id) => `/product/${id}`,
+      providesTags: ["product"],
+    }),
+
     createProduct: builder.mutation<CreateProductResponse, FormData>({
       query: (formData) => ({
         url: "/product",
@@ -118,7 +153,6 @@ export const productApi = baseApi.injectEndpoints({
       invalidatesTags: ["product"],
     }),
 
-    // UPDATE product
     updateProduct: builder.mutation<UpdateProductResponse, { id: string; formData: FormData }>({
       query: ({ id, formData }) => ({
         url: `/product/${id}`,
@@ -128,7 +162,6 @@ export const productApi = baseApi.injectEndpoints({
       invalidatesTags: ["product"],
     }),
 
-    // DELETE product
     deleteProduct: builder.mutation<DeleteProductResponse, string>({
       query: (id) => ({
         url: `/product/${id}`,
@@ -142,6 +175,7 @@ export const productApi = baseApi.injectEndpoints({
 
 export const {
   useGetProductListQuery,
+  useGetProductByIdQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

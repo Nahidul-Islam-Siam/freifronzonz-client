@@ -4,64 +4,16 @@
 
 "use client";
 
-import { Form, Input, Upload, message, Select } from "antd";
+import { Form, Input, Upload, message, Select, Spin } from "antd";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
+import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
+import { useGetProductByIdQuery } from "@/redux/service/admin/productApi";
 
 const { TextArea } = Input;
 const { Option } = Select;
-
-// Mock category and brand data (since we're removing API)
-const mockCategories = [
-  { id: "1", name: "Red Wine" },
-  { id: "2", name: "White Wine" },
-  { id: "3", name: "Champagne" },
-  { id: "4", name: "Sparkling" },
-  { id: "5", name: "Rosé Wine" },
-  { id: "6", name: "Spirit Wine" },
-];
-
-const mockBrands = [
-  { id: "1", name: "VESEVO" },
-  { id: "2", name: "MOËT" },
-  { id: "3", name: "BAREFOOT" },
-  { id: "4", name: "VALDO" },
-  { id: "5", name: "JACK DANIEL'S" },
-  { id: "6", name: "PERRIER-JOUËT" },
-  { id: "7", name: "HIGHLAND PARK" },
-  { id: "8", name: "VEUVE CLICQUOT" },
-  { id: "9", name: "CHÂTEAU MARGAUX" },
-  { id: "10", name: "CONCHA Y TORO" },
-  { id: "11", name: "HENNESSY" },
-  { id: "12", name: "MUMM" },
-  { id: "13", name: "CHÂTEAU D'ESCLANS" },
-  { id: "14", name: "19 CRIMES" },
-  { id: "15", name: "KORBEL" },
-  { id: "16", name: "GREY GOOSE" },
-  { id: "17", name: "CLOUDY BAY" },
-  { id: "18", name: "DOM PÉRIGNON" },
-];
-
-// Mock product data for editing
-const mockProduct = {
-  id: "694e0f563be44688d00bc842",
-  name: "Donec a Fortress Elegance",
-  shortDes: "This short des of Fortress wine",
-  des: "Alcohol is good for health. It give us strenght both mental and slightly physically",
-  images: [
-    "images-1766723414278-911254133.png"
-  ],
-  size: "500ml",
-  price: "200",
-  discount: true,
-  discountPercent: "10",
-  stock: true,
-  quantity: "25",
-  categoryId: "1",
-  brandId: "5",
-  tag: null,
-};
 
 export default function EditProductPage() {
   const [form] = Form.useForm();
@@ -69,32 +21,50 @@ export default function EditProductPage() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useParams();
+  
+  const productId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  // Get product ID from URL (if needed for real implementation)
-  const productId = searchParams.get('id') || mockProduct.id;
+  console.log(productId);
+  
+  
+  // ✅ Real API calls
+  const { data: productData , isLoading} = useGetProductByIdQuery(productId || '', { skip: !productId });
+  const { data: categoryData } = useGetCategoryListQuery();
+  const { data: brandData } = useGetBrandListQuery();
 
-  // Initialize form with mock product data
+  console.log(productData);
+  
+  
+  const product = productData?.data;
+  const categories = categoryData?.data?.category || [];
+  const brands = brandData?.data?.brand || [];
+  
+
+
+  // ✅ Initialize form with real API data
   useEffect(() => {
-    form.setFieldsValue({
-      productName: mockProduct.name,
-      shortDescription: mockProduct.shortDes,
-      description: mockProduct.des,
-      bottleSize: mockProduct.size,
-      price: mockProduct.price,
-      offer: mockProduct.discount ? mockProduct.discountPercent : "",
-      stockStatus: mockProduct.stock ? "inStock" : "outOfStock",
-      totalProduct: mockProduct.quantity,
-      category: mockProduct.categoryId,
-      brandName: mockProduct.brandId,
-      tag: mockProduct.tag || "",
-    });
+    if (product) {
+      form.setFieldsValue({
+        productName: product.name,
+        shortDescription: product.shortDes,
+        description: product.des,
+        bottleSize: product.size,
+        price: product.price,
+        offer: product.discount ? product.discountPercent : "",
+        stockStatus: product.stock ? "inStock" : "outOfStock",
+        totalProduct: product.quantity,
+        category: product.category?.id || product.categoryId,
+        brandName: product.brand?.id || product.brandId,
+        tag: product.tag || "",
+      });
 
-    // Set image previews (assuming images are served from localhost:4200)
-    setPreviewUrls(
-      mockProduct.images.map(img => `http://localhost:4200/${img}`)
-    );
-  }, [form]);
+      // Set image previews
+      setPreviewUrls(
+        product.images.map(img => `http://localhost:4200/${img}`)
+      );
+    }
+  }, [product, form]);
 
   const handleProductImageChange = ({ fileList }: any) => {
     const files = fileList
@@ -122,6 +92,11 @@ export default function EditProductPage() {
   };
 
   const onFinish = async (values: any) => {
+    if (!productId) {
+      message.error("Product ID is required");
+      return;
+    }
+    
     if (productImageFiles.length === 0 && previewUrls.length === 0) {
       message.error("Please upload at least one product image");
       return;
@@ -130,17 +105,35 @@ export default function EditProductPage() {
     setIsSubmitting(true);
 
     try {
-      // ✅ Simulate form submission (no API call)
-      console.log("Editing product with values:", values);
-      console.log("Product images:", productImageFiles);
+      // ✅ Build the data payload
+      const dataPayload = {
+        name: values.productName,
+        shortDes: values.shortDescription,
+        des: values.description,
+        size: values.bottleSize,
+        price: values.price,
+        discount: values.offer ? values.offer.trim() !== "" : false,
+        discountPercent: values.offer || "0",
+        stock: values.stockStatus === "inStock" ? true : false,
+        quantity: values.totalProduct,
+        categoryId: values.category,
+        brandId: values.brandName,
+        tag: values.tag || null,
+      };
 
-      // ✅ Show success message
+      // ✅ Create FormData
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(dataPayload));
+      
+      // ✅ Append new images (if any)
+      for (let i = 0; i < productImageFiles.length; i++) {
+        formData.append("images", productImageFiles[i]);
+      }
+
+      // ✅ Here you would call your update mutation
+      console.log("Update payload:", formData);
+      
       message.success("Product updated successfully!");
-      
-      // ✅ Reset form after success (optional)
-      // form.resetFields();
-      
-      // ✅ Redirect to all products page
       router.push("/dashboard/all-product");
       
     } catch (error: any) {
@@ -149,6 +142,28 @@ export default function EditProductPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 mx-auto ant-something rounded-xl flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="p-6 mx-auto ant-something rounded-xl">
+        <div className="text-center text-red-500">Product not found</div>
+        <button 
+          onClick={() => router.push("/dashboard/all-product")}
+          className="mt-4 bg-[#AF6900] text-white px-4 py-2 rounded"
+        >
+          Back to Products
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 mx-auto ant-something rounded-xl">
@@ -208,10 +223,11 @@ export default function EditProductPage() {
             rules={[{ required: true, message: "Please select brand name" }]}
           >
             <Select
-              placeholder="Winery"
+              placeholder="Select Brand"
               className="rounded-[8px] border border-[#D9D9D9] bg-white"
+              loading={!brandData}
             >
-              {mockBrands.map((br) => (
+              {brands.map((br) => (
                 <Option key={br.id} value={br.id}>
                   {br.name}
                 </Option>
@@ -229,10 +245,11 @@ export default function EditProductPage() {
             rules={[{ required: true, message: "Please select category" }]}
           >
             <Select
-              placeholder="Red Wine"
+              placeholder="Select Category"
               className="rounded-[8px] border border-[#D9D9D9] bg-white"
+              loading={!categoryData}
             >
-              {mockCategories.map((cat) => (
+              {categories.map((cat) => (
                 <Option key={cat.id} value={cat.id}>
                   {cat.name}
                 </Option>
@@ -312,7 +329,6 @@ export default function EditProductPage() {
                 name="stockStatus"
                 value="inStock"
                 className="mr-2"
-                defaultChecked
               />
               <label htmlFor="inStock" className="text-sm font-medium">
                 In Stock
