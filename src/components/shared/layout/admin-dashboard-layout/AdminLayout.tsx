@@ -19,7 +19,8 @@ import {
   LogOut,
   PlusCircle,     // for "Add Brand"
   Tag,            // for "Product Categories"
-  User,           // for "Profile Management"
+  User,
+  Wine,           // for "Profile Management"
 } from "lucide-react";
 
 import { getItem, MenuItem } from "../Layout";
@@ -39,6 +40,11 @@ const navItems: MenuItem[] = [
     <Link href="/dashboard/add-brand">Add Brand</Link>,
     "/dashboard/add-brand",
     <PlusCircle className="text-xl" />
+  ),
+  getItem(
+    <Link href="/dashboard/add-bottle">Add Bottle</Link>,
+    "/dashboard/add-bottle",
+    <Wine className="text-xl" />
   ),
   getItem(
     <Link href="/dashboard/product-categories">Product Categories</Link>,

@@ -16,6 +16,15 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["auth"],
     }),
+
+    getMe: builder.query<any, void>({
+      query: () => ({
+        url: "/user",
+        method: "GET",
+      }),
+      providesTags: ["auth"],
+    }),
+
     loginUser: builder.mutation<any, LoginRequest>({
       query: (user) => ({
         url: "/auth/login",
@@ -62,6 +71,7 @@ const authApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetMeQuery,
   useRegisterUserMutation,
   useLoginUserMutation,
   useLogoutMutation,

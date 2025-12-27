@@ -12,7 +12,7 @@ export interface ApiResponse<T> {
 // ✅ Brand item (similar to Category, but separate type)
 export interface Brand {
   id: string;
-  name: string;
+  name: string; 
   des: string | null;    // Can be null (from your API)
   img: string | null;
 }
