@@ -13,15 +13,15 @@ import Swal from 'sweetalert2';
 interface Product {
   id: string;
   name: string;
-  shortDes: string; // ✅ shortDes instead of description
-  des: string;      // ✅ des instead of description
-  images: string[]; // ✅ images array
-  size: string;     // ✅ size instead of bottleSize
-  price: string;    // ✅ price is string
+  shortDes: string;
+  des: string;
+  images: string[];
+  size: string;
+  price: string;
   discount: boolean;
   discountPercent: string;
   stock: boolean;
-  quantity: string; // ✅ quantity is string
+  quantity: string;
   createdAt: string;
   updatedAt: string;
   category: {
@@ -42,8 +42,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const dispatch = useDispatch();
 
   const renderStars = (rating: number) => {
-    // Since your API doesn't return rating/reviews, we'll use default values
-    // You can update this when your API includes rating data
     return (
       <div className="flex gap-1">
         {[...Array(5)].map((_, i) => (
@@ -63,12 +61,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   // ✅ Calculate original price for discount display
-  const getOriginalPrice = (): string | null => {
+  const getOriginalPrice = (): number | null => {
     if (product.discount && parseInt(product.discountPercent) > 0) {
       const currentPrice = parseFloat(product.price);
       const discountPercent = parseInt(product.discountPercent);
       const originalPrice = currentPrice / (1 - discountPercent / 100);
-      return originalPrice.toFixed(2);
+      return originalPrice;
     }
     return null;
   };
@@ -76,16 +74,16 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // ✅ Dispatch with correct fields from your API
+    // ✅ Dispatch with correct fields - ID should be string (not Number)
     dispatch(addToCart({
-id: Number(product.id),
+     id: product.id, // ✅ Keep as string (matches your API)
       name: product.name,
       image: product.images[0] ? `http://localhost:4200/${product.images[0]}` : "/placeholder.svg",
       price: parseFloat(formatPrice(product.price)),
-      originalPrice: getOriginalPrice() ? parseFloat(getOriginalPrice()!) : parseFloat(formatPrice(product.price)),
+      originalPrice: getOriginalPrice() ? getOriginalPrice()! : parseFloat(formatPrice(product.price)),
       description: product.des,
       category: product.category.name,
-      bottleSize: product.size, // Map size to bottleSize for cart
+      bottleSize: product.size,
       brand: product.brand.name,
     }));
 
@@ -138,10 +136,9 @@ id: Number(product.id),
 
       <div className="p-4 text-center sm:p-5">
         <div className="flex items-center justify-center gap-2 mb-2">
-          {/* ✅ Use default 5-star rating since API doesn't provide it */}
           {renderStars(5)}
           <span className="text-xs md:text-sm text-[#482817]">
-            (0 reviews) {/* API doesn't provide review count */}
+            (0 reviews)
           </span>
         </div>
 
@@ -152,18 +149,15 @@ id: Number(product.id),
         <div className="flex items-baseline justify-center gap-2">
           {getOriginalPrice() ? (
             <>
-
-                   <span className="   text-sm font-bold text-[#968F8F]">
+              {/* ✅ CORRECTED: Original price (higher) first, then discounted price */}
+              <span className="text-sm font-bold text-[#968F8F]">
+                ${getOriginalPrice()!.toFixed(2)}
+              </span>
+              <span className="text-xs text-gray-500 line-through">
                 ${formatPrice(product.price)}
               </span>
-              {/* ✅ Show discounted pricing */}
-              <span className=" text-xs text-gray-500 line-through ">
-                ${getOriginalPrice()}
-              </span>
-       
             </>
           ) : (
-            /* ✅ Show regular pricing */
             <span className="text-sm font-bold text-[#968F8F]">
               ${formatPrice(product.price)}
             </span>

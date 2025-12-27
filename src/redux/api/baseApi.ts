@@ -9,7 +9,7 @@ import { RootState } from "../store";
 import { logout, setAccessToken } from "../features/auth";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "http://localhost:4200/api/v1",
+  baseUrl: "http://10.0.30.59:4200/api/v1",
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth?.accessToken;
     if (token) {

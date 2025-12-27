@@ -6,7 +6,7 @@ import Link from "next/link";
 
 // ✅ Updated CartItem to match Redux state
 interface CartItem {
-  id: number;
+  id: string;
   name: string;
   image: string;
   price: number;
@@ -21,8 +21,8 @@ interface CartItem {
 
 interface CartItemsListProps {
   items: CartItem[];
-  onUpdateQuantity: (id: number, quantity: number) => void;
-  onRemoveItem: (id: number) => void;
+  onUpdateQuantity: (id: string, quantity: number) => void;
+  onRemoveItem: (id: string) => void;
   showSummary?: boolean;
 }
 
@@ -36,6 +36,9 @@ export default function CartItemsList({
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  console.log(items);
+  
   const shippingFee = 0;
   const total = subtotal + shippingFee;
 

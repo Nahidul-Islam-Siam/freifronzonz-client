@@ -26,12 +26,12 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ✅ Cart management functions
-  const handleUpdateQuantity = (id: number, quantity: number) => {
+  const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return;
     dispatch(updateQuantity({ id, quantity }));
   };
 
-  const handleRemoveItem = (id: number) => {
+  const handleRemoveItem = (id: string) => {
     dispatch(removeFromCart(id));
   };
 

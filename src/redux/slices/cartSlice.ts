@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // ✅ Product interface (matches your actual data)
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   image: string;
   price: number;
@@ -60,8 +60,8 @@ export const cartSlice = createSlice({
       state.count = state.items.reduce((sum, item) => sum + item.quantity, 0);
     },
 
-    // ✅ Remove by product ID (number)
-    removeFromCart: (state, action: PayloadAction<number>) => {
+    // ✅ Remove by product ID (string)
+    removeFromCart: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
       state.total = state.items.reduce(
         (sum, item) => sum + item.price * item.quantity,
@@ -73,7 +73,7 @@ export const cartSlice = createSlice({
     // ✅ Update quantity by product ID (number)
     updateQuantity: (
       state,
-      action: PayloadAction<{ id: number; quantity: number }>
+      action: PayloadAction<{ id: string; quantity: number }>
     ) => {
       const { id, quantity } = action.payload;
       const item = state.items.find((item) => item.id === id);

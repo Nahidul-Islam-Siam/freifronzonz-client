@@ -14,12 +14,12 @@ export default function CartPage() {
   const { items, total } = useSelector((state: RootState) => state.cart);
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleUpdateQuantity = (id: number, quantity: number) => {
+  const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return;
     dispatch(updateQuantity({ id, quantity }));
   };
 
-  const handleRemoveItem = (id: number) => {
+  const handleRemoveItem = (id: string) => {
     dispatch(removeFromCart(id));
   };
 
