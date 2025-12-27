@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// components/ProductCard.tsx
+// components/cards/ProductCard.tsx
 'use client';
 
 import { Heart, Search, ShoppingCart } from "lucide-react";
@@ -9,20 +9,29 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/slices/cartSlice';
 import Swal from 'sweetalert2';
 
-// ✅ Use your actual product interface
+// ✅ Interface that exactly matches your API response
 interface Product {
-  id: number;
+  id: string;
   name: string;
-  image: string;
-  price: number;
-  originalPrice: number;
-  rating: number;
-  reviews: number;
-  description: string;
-  discount: string | null;
-  category: string;
-  bottleSize: string;
-  brand: string;
+  shortDes: string; // ✅ shortDes instead of description
+  des: string;      // ✅ des instead of description
+  images: string[]; // ✅ images array
+  size: string;     // ✅ size instead of bottleSize
+  price: string;    // ✅ price is string
+  discount: boolean;
+  discountPercent: string;
+  stock: boolean;
+  quantity: string; // ✅ quantity is string
+  createdAt: string;
+  updatedAt: string;
+  category: {
+    id: string;
+    name: string;
+  };
+  brand: {
+    id: string;
+    name: string;
+  };
 }
 
 interface ProductCardProps {
@@ -33,6 +42,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const dispatch = useDispatch();
 
   const renderStars = (rating: number) => {
+    // Since your API doesn't return rating/reviews, we'll use default values
+    // You can update this when your API includes rating data
     return (
       <div className="flex gap-1">
         {[...Array(5)].map((_, i) => (
@@ -44,20 +55,38 @@ export default function ProductCard({ product }: ProductCardProps) {
     );
   };
 
+  // ✅ Helper to safely format price strings
+  const formatPrice = (priceStr: string): string => {
+    if (!priceStr) return "0.00";
+    const priceNum = parseFloat(priceStr);
+    return isNaN(priceNum) ? "0.00" : priceNum.toFixed(2);
+  };
+
+  // ✅ Calculate original price for discount display
+  const getOriginalPrice = (): string | null => {
+    if (product.discount && parseInt(product.discountPercent) > 0) {
+      const currentPrice = parseFloat(product.price);
+      const discountPercent = parseInt(product.discountPercent);
+      const originalPrice = currentPrice / (1 - discountPercent / 100);
+      return originalPrice.toFixed(2);
+    }
+    return null;
+  };
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // ✅ Dispatch the full product data (excluding rating, reviews, discount)
+    // ✅ Dispatch with correct fields from your API
     dispatch(addToCart({
-      id: product.id,
+id: Number(product.id),
       name: product.name,
-      image: product.image,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      description: product.description,
-      category: product.category,
-      bottleSize: product.bottleSize,
-      brand: product.brand,
+      image: product.images[0] ? `http://localhost:4200/${product.images[0]}` : "/placeholder.svg",
+      price: parseFloat(formatPrice(product.price)),
+      originalPrice: getOriginalPrice() ? parseFloat(getOriginalPrice()!) : parseFloat(formatPrice(product.price)),
+      description: product.des,
+      category: product.category.name,
+      bottleSize: product.size, // Map size to bottleSize for cart
+      brand: product.brand.name,
     }));
 
     Swal.fire({
@@ -76,14 +105,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Image
           width={400}
           height={400}
-          src={product.image || "/placeholder.svg"}
+          src={product.images[0] ? `http://localhost:4200/${product.images[0]}` : "/placeholder.svg"}
           alt={product.name}
           className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
         />
 
-        {product.discount && (
+        {/* ✅ Show discount badge if product has discount */}
+        {product.discount && product.discountPercent && (
           <div className="absolute top-3 right-3 bg-orange-400 text-white px-2 py-1 rounded text-xs font-bold">
-            {product.discount}
+            -{product.discountPercent}%
           </div>
         )}
 
@@ -108,9 +138,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-4 text-center sm:p-5">
         <div className="flex items-center justify-center gap-2 mb-2">
-          {renderStars(product.rating)}
+          {/* ✅ Use default 5-star rating since API doesn't provide it */}
+          {renderStars(5)}
           <span className="text-xs md:text-sm text-[#482817]">
-            ({product.reviews} reviews)
+            (0 reviews) {/* API doesn't provide review count */}
           </span>
         </div>
 
@@ -119,12 +150,24 @@ export default function ProductCard({ product }: ProductCardProps) {
         </h3>
 
         <div className="flex items-baseline justify-center gap-2">
-          <span className="text-sm font-bold text-[#968F8F]">
-            ${product.originalPrice.toFixed(2)}
-          </span>
-          <span className="text-xs text-gray-500 line-through">
-            ${product.price.toFixed(2)}
-          </span>
+          {getOriginalPrice() ? (
+            <>
+
+                   <span className="   text-sm font-bold text-[#968F8F]">
+                ${formatPrice(product.price)}
+              </span>
+              {/* ✅ Show discounted pricing */}
+              <span className=" text-xs text-gray-500 line-through ">
+                ${getOriginalPrice()}
+              </span>
+       
+            </>
+          ) : (
+            /* ✅ Show regular pricing */
+            <span className="text-sm font-bold text-[#968F8F]">
+              ${formatPrice(product.price)}
+            </span>
+          )}
         </div>
       </div>
     </Link>

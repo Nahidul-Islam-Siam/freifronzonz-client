@@ -7,7 +7,9 @@ import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
 import Image from "next/image";
 import ProductCard from "../cards/ProductCard";
 import { products } from "../cards/ProductsDummyData";
-
+import { useGetProductListQuery } from "@/redux/service/admin/productApi";
+import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
+import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
 
 const BOTTLE_SIZES = ["150ml", "375ml", "750ml", "1.5L", "3L"];
 
@@ -30,51 +32,47 @@ export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-
+  const { data: productsData } = useGetProductListQuery({});
+  const { data: categoriesResponse} = useGetCategoryListQuery();
+  const categories = categoriesResponse?.data?.category || []
   const itemsPerPage = 12;
+  
 
   const normalizeCategory = (cat: string): string => {
     return cat.toLowerCase().replace(/\s+/g, "-");
   };
 
-  const CATEGORY_METADATA = [
-    { id: "red-wine", name: "Red Wine" },
-    { id: "white-wine", name: "White Wine" },
-    { id: "rose-wine", name: "Rosé Wine" },
-    { id: "champagne", name: "Champagne" },
-    { id: "sparkling", name: "Sparkling" },
-    { id: "spirit-wine", name: "Spirit Wine" },
-  ];
+    const {
+    data: brandsResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetBrandListQuery();
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      "red-wine": 0,
-      "white-wine": 0,
-      "rose-wine": 0,
-      "champagne": 0,
-      "sparkling": 0,
-      "spirit-wine": 0,
-    };
+// const toggleDropdown = (type: "brand") => {
+//   setActiveDropdown((prev) => (prev === type ? null : type))
+// }
 
-    products.forEach((product) => {
-      const norm = normalizeCategory(product.category);
-      if (counts[norm] !== undefined) {
-        counts[norm]++;
-      }
-    });
-
-    return counts;
-  }, []);
 
   const CATEGORIES = useMemo(() => {
     return [
-      { id: "all", name: "All Categories", count: products.length },
-      ...CATEGORY_METADATA.map((meta) => ({
-        ...meta,
-        count: categoryCounts[meta.id],
-      })),
+      {
+        id: "all",
+        name: "All Categories",
+        count: products.length,
+      },
+      ...categories.map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        count: products.filter((product) => product.category === cat.name).length,
+      }))
     ];
-  }, [categoryCounts]);
+  } , [products, categories]);
+
+
+
+  
+
 
   const toggleCategory = (categoryId: string) => {
     if (categoryId === "all") {
@@ -94,11 +92,13 @@ export default function ShopPage() {
     );
   };
 
-  const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
-  };
+  // const toggleBrand = (brand: string) => {
+  //   brandsResponse?.data.brand((prev) =>
+  //     prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+  //   );
+  // };
+
+
 
   const toggleDropdown = (dropdown: string) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
@@ -149,13 +149,26 @@ export default function ShopPage() {
     return 0;
   });
 
-  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / itemsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedProducts.length / itemsPerPage)
+  );
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedProducts = sortedProducts.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategories, priceRange, selectedBottleSizes, selectedBrands, searchQuery, sortBy]);
+  }, [
+    selectedCategories,
+    priceRange,
+    selectedBottleSizes,
+    selectedBrands,
+    searchQuery,
+    sortBy,
+  ]);
 
   // Reusable Price Filter Component
   const PriceFilter = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -169,7 +182,9 @@ export default function ShopPage() {
             max={500}
             step={10}
             value={priceRange[0]}
-            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+            onChange={(e) =>
+              setPriceRange([Number(e.target.value), priceRange[1]])
+            }
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400"
           />
           <input
@@ -178,7 +193,9 @@ export default function ShopPage() {
             max={500}
             step={10}
             value={priceRange[1]}
-            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+            onChange={(e) =>
+              setPriceRange([priceRange[0], Number(e.target.value)])
+            }
             className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400 ${
               isMobile ? "mt-2" : ""
             }`}
@@ -187,7 +204,9 @@ export default function ShopPage() {
       </div>
       <div className="text-sm text-gray-600">
         <span>Range: </span>
-        <span className="font-medium">${priceRange[0]} – ${priceRange[1]}</span>
+        <span className="font-medium">
+          ${priceRange[0]} – ${priceRange[1]}
+        </span>
       </div>
     </div>
   );
@@ -202,7 +221,9 @@ export default function ShopPage() {
             className="w-full bg-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
           >
             <SlidersHorizontal className="w-5 h-5 text-gray-600" />
-            <span className="font-medium text-gray-700">Filters & Categories</span>
+            <span className="font-medium text-gray-700">
+              Filters & Categories
+            </span>
           </button>
         </div>
 
@@ -271,10 +292,10 @@ export default function ShopPage() {
                 Select Brands
               </h3>
               <div className="grid grid-cols-3 gap-3">
-                {BRANDS.map((brand) => (
+                {brandsResponse?.data.brand.map((brand) => (
                   <button
                     key={brand.name}
-                    onClick={() => toggleBrand(brand.name)}
+                    onClick={() => (brand.name)}
                     className={`border-2 rounded-lg transition-all ${
                       selectedBrands.includes(brand.name)
                         ? "border-orange-400 bg-orange-50"
@@ -282,7 +303,7 @@ export default function ShopPage() {
                     }`}
                   >
                     <Image
-                      src={brand.logo}
+                      src="/images/brand-1.png"
                       alt={brand.name}
                       width={100}
                       height={100}
@@ -315,10 +336,15 @@ export default function ShopPage() {
                 <div className="p-4 space-y-6">
                   {/* Categories */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">Categories</h3>
+                    <h3 className="font-bold text-[#482817] mb-4">
+                      Categories
+                    </h3>
                     <div className="space-y-3">
                       {CATEGORIES.map((category) => (
-                        <div key={category.id} className="flex items-center space-x-2">
+                        <div
+                          key={category.id}
+                          className="flex items-center space-x-2"
+                        >
                           <input
                             type="checkbox"
                             id={`mobile-${category.id}`}
@@ -342,7 +368,9 @@ export default function ShopPage() {
 
                   {/* Bottle Size */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">Bottle Size</h3>
+                    <h3 className="font-bold text-[#482817] mb-4">
+                      Bottle Size
+                    </h3>
                     <div className="grid grid-cols-4 gap-2">
                       {BOTTLE_SIZES.map((size) => (
                         <button
@@ -362,12 +390,14 @@ export default function ShopPage() {
 
                   {/* Brands */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">Select Brands</h3>
+                    <h3 className="font-bold text-[#482817] mb-4">
+                      Select Brands
+                    </h3>
                     <div className="grid grid-cols-3 gap-3">
                       {BRANDS.map((brand) => (
                         <button
                           key={brand.name}
-                          onClick={() => toggleBrand(brand.name)}
+                          onClick={() => (brand.name)}
                           className={`border-2 rounded-lg p-2 transition-all ${
                             selectedBrands.includes(brand.name)
                               ? "border-orange-400 bg-orange-50"
@@ -403,7 +433,8 @@ export default function ShopPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="text-xl md:text-2xl font-semibold text-[#968F8F]">
                   Showing {startIndex + 1}–
-                  {Math.min(startIndex + itemsPerPage, sortedProducts.length)} of {sortedProducts.length} item(s)
+                  {Math.min(startIndex + itemsPerPage, sortedProducts.length)}{" "}
+                  of {sortedProducts.length} item(s)
                 </div>
 
                 <div className="py-4 px-4 sm:px-6 lg:px-8">
@@ -459,47 +490,59 @@ export default function ShopPage() {
                     {/* Additional Dropdowns */}
                     <div className="flex flex-wrap gap-3">
                       {/* Brand */}
-                      <div className="relative w-full sm:w-32">
-                        <button
-                          onClick={() => toggleDropdown("brand")}
-                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
-                        >
-                          <span>Brand</span>
-                          <ChevronDown className="w-4 h-4 text-gray-600" />
-                        </button>
-                        {activeDropdown === "brand" && (
-                          <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
-                            <button
-                              onClick={() => {
-                                setSelectedBrands([]);
-                                setActiveDropdown(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                            >
-                              All Brands
-                            </button>
-                            {BRANDS.map((brand) => (
-                              <button
-                                key={brand.name}
-                                onClick={() => {
-                                  toggleBrand(brand.name);
-                                  setActiveDropdown(null);
-                                }}
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-                              >
-                                <Image
-                                  src={brand.logo}
-                                  alt={brand.name}
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                {brand.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+              <div className="relative w-full sm:w-32">
+  <button
+    onClick={() => toggleDropdown("brand")}
+    className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
+  >
+    <span>
+      {selectedBrands.length === 0
+        ? "Brand"
+        : brandsResponse?.data?.brand.find(
+            (b) => b.id === selectedBrands[0]
+          )?.name}
+    </span>
+    <ChevronDown className="w-4 h-4 text-gray-600" />
+  </button>
+
+  {activeDropdown === "brand" && (
+    <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
+      
+      {/* All Brands */}
+      <button
+        onClick={() => {
+          setSelectedBrands([])
+          setActiveDropdown(null)
+        }}
+        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+      >
+        All Brands
+      </button>
+
+      {/* Brand list from API */}
+      {brandsResponse?.data?.brand.map((brand) => (
+        <button
+          key={brand.id}
+          onClick={() => {
+            setSelectedBrands([brand.id]) // single select for now
+            setActiveDropdown(null)
+          }}
+          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        >
+          <Image
+            src={ "/images/brand-placeholder.png"}
+            alt={brand.name}
+            width={20}
+            height={20}
+            className="w-5 h-5 object-contain"
+          />
+          {brand.name}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
 
                       {/* Category */}
                       <div className="relative w-full sm:w-40">
@@ -581,13 +624,15 @@ export default function ShopPage() {
             {/* Product Grid */}
             {paginatedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {paginatedProducts.map((product) => (
+                {productsData?.data?.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
               <div className="bg-white rounded-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">No products found matching your filters.</p>
+                <p className="text-gray-500 text-lg">
+                  No products found matching your filters.
+                </p>
               </div>
             )}
 
@@ -623,7 +668,9 @@ export default function ShopPage() {
                 })}
 
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

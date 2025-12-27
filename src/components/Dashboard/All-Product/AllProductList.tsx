@@ -47,7 +47,7 @@ export default function AllProductList({
 
   const [allTransformedProducts, setAllTransformedProducts] = useState<ProductRecord[]>([]);
   
-  // ✅ Transform all products once
+  // ✅ Transform all products once 
   useEffect(() => {
     if (productsResponse?.data?.products) {
       const transformed = productsResponse.data.products.map((product: any) => ({

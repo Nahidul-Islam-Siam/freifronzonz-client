@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"; // Required for Swiper hooks in Next.js App Router
 
@@ -9,10 +10,17 @@ import "swiper/css/pagination";
 
 import ProductCard from "../cards/ProductCard";
 import { products } from "../cards/ProductsDummyData";
+import { useGetProductListQuery } from "@/redux/service/admin/productApi";
 
 // Sample product data (replace with your actual API/data)
 
 export default function TrendingProductsSlider() {
+  const {data:productsData} = useGetProductListQuery({});
+
+  console.log(productsData);
+  
+
+
   return (
     <section className="py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto  grid grid-cols-1">
@@ -51,7 +59,7 @@ export default function TrendingProductsSlider() {
             }}
             className="pb-8"
           >
-            {products.map((product) => (
+            {productsData?.data?.products?.map((product: any) => (
               <SwiperSlide key={product.id}>
                 <ProductCard product={product} />
               </SwiperSlide>

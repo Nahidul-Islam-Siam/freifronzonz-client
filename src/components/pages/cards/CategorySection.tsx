@@ -4,7 +4,9 @@ import { useState } from "react"
 import CategoryFilter from "./CategoryFilter"
 import ProductCard from "./ProductCard"
 import { useRouter } from "next/navigation"
-import { products } from "./ProductsDummyData"
+// import { products } from "./ProductsDummyData"
+import { useGetProductListQuery } from "@/redux/service/admin/productApi"
+import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi"
 
 // const categories = ["All", "Rosé Wines", "Sparkling", "Red Wines", "White Wines"]
 
@@ -14,18 +16,36 @@ export default function CategorYSection() {
   const [activeCategory, setActiveCategory] = useState("All")
   const [visibleCount, setVisibleCount] = useState(8)
 
-  const router = useRouter()
+const router = useRouter()
+const { data: categoriesResponse} = useGetCategoryListQuery();
+const categories = categoriesResponse?.data?.category || []
 
-  // Filter (you can improve later)
-  const filteredProducts = products
+const categoryMap = categories.reduce((acc, cat) => {
+  acc[cat.name] = cat.id
+  return acc
+}, {} as Record<string, string>)
 
-  const visibleProducts = filteredProducts.slice(0, visibleCount)
+const selectedCategoryId =
+  activeCategory === "All" ? undefined : categoryMap[activeCategory]
 
-  const handleLoadMore = () => {
-    if (visibleCount === 8) {
-      setVisibleCount(12)
-    }
+const { data: productsData } = useGetProductListQuery({
+  categoryId: selectedCategoryId,
+})
+
+const categoryNames = ["All", ...categories.map((cat) => cat.name)]
+
+// Filter (you can improve later)
+const filteredProducts = productsData?.data.products || []
+const visibleProducts = filteredProducts.slice(0, visibleCount)
+
+const handleLoadMore = () => {
+  if (visibleCount === 8) {
+    setVisibleCount(12)
   }
+}
+
+  // Handle URL Search Params
+
 
   const handleSeeAll = () => {
     router.push("/shop")   // <-- redirect page
@@ -42,7 +62,7 @@ export default function CategorYSection() {
         </h1>
 
         <CategoryFilter
-          categories={["All", "Rosé Wines", "Sparkling", "Red Wines", "White Wines"]}
+          categories={categoryNames}
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
         />
@@ -59,7 +79,7 @@ export default function CategorYSection() {
         {/* Buttons */}
         <div className="flex justify-center mt-10">
           {/* SHOW LOAD MORE when visibleCount == 8 */}
-          {visibleCount === 8 && (
+          {visibleCount === 2 && (
             <button
               onClick={handleLoadMore}
               className="px-6 py-2 bg-[#6D0E0B] text-white rounded-md hover:bg-[#540b08] transition"
@@ -69,7 +89,7 @@ export default function CategorYSection() {
           )}
 
           {/* SHOW SEE ALL when visibleCount == 12 & more products exist */}
-          {visibleCount === 12 && hasMore && (
+          {visibleCount === 4 && hasMore && (
             <button
               onClick={handleSeeAll}
               className="px-6 py-2 bg-[#6D0E0B] text-white rounded-md hover:bg-[#540b08] transition"
