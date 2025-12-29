@@ -140,12 +140,19 @@ const PaymentTable: React.FC = () => {
             showSizeChanger: false,
             position: ["bottomCenter"],
             hideOnSinglePage: false, // 👈 Always show pagination
-            
+
           }}
           rowClassName="hover:bg-gray-50"
           scroll={{ x: "max-content" }}
           className="w-full"
         />
+
+        <style jsx global>{`
+  .custom-payment-table .ant-pagination {
+    display: flex !important;
+    justify-content: end !important; /* center pagination */
+  }
+`}</style>
       </div>
 
       {/* Modal */}
