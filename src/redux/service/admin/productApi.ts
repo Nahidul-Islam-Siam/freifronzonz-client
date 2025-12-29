@@ -1,7 +1,9 @@
 // redux/service/admin/productApi.ts
 import baseApi from "@/redux/api/baseApi";
 
-// Generic wrapper
+// --------------------
+// Generic API Wrapper
+// --------------------
 export interface ApiResponse<T> {
   status: boolean;
   message: string;
@@ -9,7 +11,9 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
-// Category and Brand interfaces
+// --------------------
+// Category & Brand
+// --------------------
 export interface ProductCategory {
   id: string;
   name: string;
@@ -28,7 +32,9 @@ export interface ProductBrand {
   updatedAt: string;
 }
 
-// ✅ Statistics object (from your /getAllByAdmin response)
+// --------------------
+// Product Statistics (Admin) 
+// --------------------
 export interface ProductStatistics {
   totalSales: number;
   totalQuantitySold: number;
@@ -38,14 +44,16 @@ export interface ProductStatistics {
   isOutOfStock: boolean;
 }
 
-// ✅ Product interface for ADMIN LIST response (`/product/getAllByAdmin`)
+// --------------------
+// Product (Admin List)
+// --------------------
 export interface ProductForAdmin {
   id: string;
   name: string;
   shortDes: string;
   des: string;
   images: string[];
-  sizeId: string; // 👈 API returns `sizeId`, not `size`
+  sizeId: string;
   price: string;
   discount: boolean;
   discountPercent: string;
@@ -58,7 +66,7 @@ export interface ProductForAdmin {
   statistics: ProductStatistics;
 }
 
-// ✅ Response data for admin product list
+// Admin product list response
 export interface AdminProductListData {
   total: number;
   page: number;
@@ -79,11 +87,9 @@ export interface AdminProductListData {
 
 export type GetAdminProductListResponse = ApiResponse<AdminProductListData>;
 
-// ==========
-// Interfaces for regular (non-admin) product operations (e.g., public shop or detail view)
-// ==========
-
-// Review interface (if used in detail view)
+// --------------------
+// Public Product List
+// --------------------
 export interface ProductReview {
   id: string;
   rating: number;
@@ -94,14 +100,13 @@ export interface ProductReview {
   updatedAt: string;
 }
 
-// ✅ Product interface for GET by ID (assumes full details with `size`, `shippingFee`, etc.)
 export interface ProductWithRelations {
   id: string;
   name: string;
   shortDes: string;
   des: string;
   images: string[];
-  size: string; // 👈 full product may return `size` name
+  size: string;
   price: string;
   discount: boolean;
   discountPercent: string;
@@ -119,7 +124,6 @@ export interface ProductWithRelations {
   reviews: ProductReview[];
 }
 
-// Product list response (for public `/product` endpoint, if used)
 export interface ProductListData {
   total: number;
   page: number;
@@ -133,7 +137,57 @@ export interface ProductListData {
 export type GetProductListResponse = ApiResponse<ProductListData>;
 export type GetProductByIdResponse = ApiResponse<ProductWithRelations>;
 
-// Product interface for CREATE response (flat)
+// --------------------
+// Product Detail (GET /product/:id) with proper typing
+// --------------------
+export interface ProductDetailCategory {
+  id: string;
+  name: string;
+  des: string | null;
+  img: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductDetailBrand {
+  id: string;
+  name: string;
+  des: string | null;
+  img: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductDetail {
+  id: string;
+  name: string;
+  shortDes: string;
+  des: string;
+  images: string[];
+  sizeId: string;
+  categoryId: string;
+  brandId: string;
+  tag: string | null;
+  price: string;
+  discount: boolean;
+  discountPercent: string;
+  shippingFee: string;
+  stock: boolean;
+  quantity: string;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+  category: ProductDetailCategory;
+  brand: ProductDetailBrand;
+  reviews: ProductReview[];
+  size: string;
+}
+
+export type GetProductDetailResponse = ApiResponse<ProductDetail>;
+
+// --------------------
+// Create / Update / Delete Responses
+// --------------------
 export interface Product {
   id: string;
   name: string;
@@ -157,16 +211,16 @@ export interface Product {
 
 export type CreateProductResponse = ApiResponse<Product>;
 
-// UPDATE response
 export interface UpdateProductResponseData {
   updatedProduct: ProductWithRelations;
 }
-export type UpdateProductResponse = ApiResponse<UpdateProductResponseData>;
 
-// DELETE response
+export type UpdateProductResponse = ApiResponse<UpdateProductResponseData>;
 export type DeleteProductResponse = ApiResponse<null>;
 
-// Query parameters interface (shared)
+// --------------------
+// Query Parameters
+// --------------------
 export interface ProductQueryParams {
   page?: number;
   limit?: number;
@@ -181,69 +235,50 @@ export interface ProductQueryParams {
   search?: string;
 }
 
-// Endpoints
+// --------------------
+// API Endpoints
+// --------------------
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Public product list (optional, keep if used)
     getProductList: builder.query<GetProductListResponse, ProductQueryParams>({
-      query: (params) => ({
-        url: "/product",
-        method: "GET",
-        params: { ...params },
-      }),
+      query: (params) => ({ url: "/product", method: "GET", params }),
       providesTags: ["product"],
     }),
 
-    // ✅ ADMIN endpoint — correctly typed
     getProductByAdmin: builder.query<GetAdminProductListResponse, ProductQueryParams>({
-      query: (params) => ({
-        url: "/product/getAllByAdmin",
-        method: "GET",
-        params: { ...params },
-      }),
+      query: (params) => ({ url: "/product/getAllByAdmin", method: "GET", params }),
       providesTags: ["product"],
     }),
 
-    // Product detail (assumes full object with relations)
-    getProductById: builder.query<GetProductByIdResponse, string>({
+    getProductById: builder.query<GetProductDetailResponse, string>({
       query: (id) => `/product/${id}`,
       providesTags: ["product"],
     }),
 
-    // Mutations
     createProduct: builder.mutation<CreateProductResponse, FormData>({
-      query: (formData) => ({
-        url: "/product",
-        method: "POST",
-        body: formData,
-      }),
+      query: (formData) => ({ url: "/product", method: "POST", body: formData }),
       invalidatesTags: ["product"],
     }),
 
     updateProduct: builder.mutation<UpdateProductResponse, { id: string; formData: FormData }>({
-      query: ({ id, formData }) => ({
-        url: `/product/${id}`,
-        method: "PATCH",
-        body: formData,
-      }),
+      query: ({ id, formData }) => ({ url: `/product/${id}`, method: "PATCH", body: formData }),
       invalidatesTags: ["product"],
     }),
 
     deleteProduct: builder.mutation<DeleteProductResponse, string>({
-      query: (id) => ({
-        url: `/product/${id}`,
-        method: "DELETE",
-      }),
+      query: (id) => ({ url: `/product/${id}`, method: "DELETE" }),
       invalidatesTags: ["product"],
     }),
   }),
   overrideExisting: true,
 });
 
-// ✅ Export all hooks
+// --------------------
+// Export Hooks
+// --------------------
 export const {
   useGetProductListQuery,
-  useGetProductByAdminQuery,        // 👈 Use this in your dashboard
+  useGetProductByAdminQuery,
   useGetProductByIdQuery,
   useCreateProductMutation,
   useUpdateProductMutation,

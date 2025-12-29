@@ -124,9 +124,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             <ShoppingCart className="w-5 h-5 text-[#482817]" />
           </button>
           
-          <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
+          {/* <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
             <Search className="w-5 h-5 text-[#482817]" />
-          </button>
+          </button> */}
           
           <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
             <Heart className="w-5 h-5 text-[#482817]" />
@@ -146,23 +146,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
 
-        <div className="flex items-baseline justify-center gap-2">
-          {getOriginalPrice() ? (
-            <>
-              {/* ✅ CORRECTED: Original price (higher) first, then discounted price */}
-              <span className="text-sm font-bold text-[#968F8F]">
-                ${getOriginalPrice()!.toFixed(2)}
-              </span>
-              <span className="text-xs text-gray-500 line-through">
-                ${formatPrice(product.price)}
-              </span>
-            </>
-          ) : (
-            <span className="text-sm font-bold text-[#968F8F]">
-              ${formatPrice(product.price)}
-            </span>
-          )}
-        </div>
+<div className="flex items-baseline justify-center gap-2">
+  {getOriginalPrice() ? (
+    <>
+      {/* ✅ Strikethrough original (higher) price */}
+      <span className="text-xs text-gray-500 line-through">
+        ${getOriginalPrice()!.toFixed(2)}
+      </span>
+      {/* ✅ Bold discounted (current) price */}
+      <span className="text-sm font-bold text-[#968F8F]">
+        ${formatPrice(product.price)}
+      </span>
+    </>
+  ) : (
+    <span className="text-sm font-bold text-[#968F8F]">
+      ${formatPrice(product.price)}
+    </span>
+  )}
+</div>
       </div>
     </Link>
   );
