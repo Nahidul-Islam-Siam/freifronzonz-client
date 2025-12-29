@@ -3,16 +3,16 @@
 
 'use client';
 
-import { Card, Table, Dropdown, Button, Modal,  Tag } from 'antd';
+import { Card, Table, Dropdown, Button, Modal, Tag, Skeleton } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
-import { useState } from 'react';
-
-// const { Text } = Typography;
+import { useState, useMemo } from 'react';
+import { useGetAllOrderByAdminQuery } from '@/redux/service/admin/orderApi';
 
 /** Interface for order data */
 interface OrderRecord {
-  key: number;
-  orderId: number;
+  key: string;
+  orderId: string;
+  orderNo: string;
   customer: string;
   product: string;
   orderDate: string;
@@ -27,27 +27,58 @@ interface RecentBookingsTableProps {
   setCurrentPage: (page: number) => void;
 }
 
-// Mock data generation
-const orderData: OrderRecord[] = Array.from({ length: 12 }, (_, i) => ({
-  key: i,
-  orderId: 12345,
-  customer: 'Alfa Adison Jonson',
-  product: 'Basket with handles',
-  orderDate: '12/12/25 - 6:00pm',
-  qty: 4,
-  totalAmount: 600,
-  status: ['Complete', 'Cancelled', 'Pending'][i % 3] as OrderRecord['status'],
-}));
-
 export default function OrderList({
   currentPage,
   setCurrentPage,
 }: RecentBookingsTableProps) {
-  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  
+  const { data: ordersResponse, isLoading } = useGetAllOrderByAdminQuery();
 
-  const showDetails = (record: OrderRecord) => {
-    setSelectedOrder(record);
+  // Transform API data to table format
+  const orderData = useMemo(() => {
+    if (!ordersResponse?.data?.orders) return [];
+    
+    return ordersResponse.data.orders.map((order: any) => {
+      // Get first product for display (you can show multiple in modal)
+      const firstProduct = order.orderProducts[0]?.product;
+      const totalQty = order.orderProducts.reduce((sum: number, op: any) => sum + op.quantity, 0);
+      
+      // Map status to display format
+      let displayStatus: OrderRecord['status'] = 'Pending';
+      if (order.status === 'COMPLETED') displayStatus = 'Complete';
+      if (order.status === 'CANCELLED') displayStatus = 'Cancelled';
+      
+      return {
+        key: order.id,
+        orderId: order.id,
+        orderNo: order.orderNo,
+        customer: order.name || order.user?.name || 'N/A',
+        product: firstProduct ? firstProduct.name : 'N/A',
+        orderDate: new Date(order.createdAt).toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: '2-digit',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace(/\//g, '-') + ' - ' + 
+        new Date(order.createdAt).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }),
+        qty: totalQty,
+        totalAmount: order.amount,
+        status: displayStatus,
+        rawOrder: order // Store full order for modal
+      };
+    });
+  }, [ordersResponse]);
+
+  const showDetails = (record: any) => {
+    setSelectedOrder(record.rawOrder);
     setIsModalVisible(true);
   };
 
@@ -85,9 +116,9 @@ export default function OrderList({
   const columns = [
     {
       title: 'Order ID',
-      dataIndex: 'orderId',
-      key: 'orderId',
-      width: 100,
+      dataIndex: 'orderNo',
+      key: 'orderNo',
+      width: 140,
     },
     {
       title: 'Customer',
@@ -105,7 +136,7 @@ export default function OrderList({
       title: 'Order Date',
       dataIndex: 'orderDate',
       key: 'orderDate',
-      width: 160,
+      width: 180,
     },
     {
       title: 'Qty',
@@ -132,7 +163,7 @@ export default function OrderList({
       title: 'Actions',
       key: 'actions',
       width: 80,
-      render: (_: any, record: OrderRecord) => (
+      render: (_: any, record: any) => (
         <Dropdown
           menu={{
             items: [
@@ -162,6 +193,57 @@ export default function OrderList({
     },
   ];
 
+  if (isLoading) {
+    return (
+      <Card
+        className="custom-recent-order-card"
+        title={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '18px',
+                color: '#A7997D',
+                fontWeight: '600',
+              }}
+            >
+              Recent Order
+            </span>
+            <a
+              href="#"
+              style={{
+                fontSize: '14px',
+                color: '#A7997D',
+                textDecoration: 'none',
+                fontWeight: '500',
+              }}
+            >
+              Show All Orders
+            </a>
+          </div>
+        }
+        style={{
+          borderRadius: '0',
+          border: 'none',
+          backgroundColor: 'transparent',
+          overflow: 'hidden',
+        }}
+        bodyStyle={{
+          padding: 0,
+          backgroundColor: 'transparent',
+        }}
+      >
+        <Skeleton active paragraph={{ rows: 5 }} />
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card
@@ -175,7 +257,6 @@ export default function OrderList({
               width: '100%',
             }}
           >
-            {/* Left: Title */}
             <span
               style={{
                 fontSize: '18px',
@@ -185,7 +266,6 @@ export default function OrderList({
             >
               Recent Order
             </span>
-            {/* Right: Show All Orders */}
             <a
               href="#"
               style={{
@@ -217,16 +297,17 @@ export default function OrderList({
             pagination={{
               current: currentPage,
               pageSize: 10,
-              total: orderData.length,
+              total: ordersResponse?.data?.total || 0,
               onChange: setCurrentPage,
               showSizeChanger: false,
               position: ['bottomRight'],
-              hideOnSinglePage: true,
+              // hideOnSinglePage: true,
             }}
             scroll={{ x: 800 }}
             tableLayout="auto"
             bordered={false}
             style={{ marginTop: '20px' }}
+            locale={{ emptyText: 'No orders found' }}
           />
         </div>
 
@@ -316,93 +397,98 @@ export default function OrderList({
         `}</style>
       </Card>
 
-{/* 💡 Modal: Order Details — EXACT MATCH TO IMAGE */}
-<Modal
-  title={
-    <div className="flex justify-between items-center w-full bg-white">
-      <h3 className="text-lg font-semibold text-gray-800">Order Details</h3>
-      {/* <button
-        onClick={closeModal}
-        className="text-gray-500 hover:text-gray-700 text-xl"
-        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+      {/* 💡 Modal: Order Details */}
+      <Modal
+        title={
+          <div className="flex justify-between items-center w-full bg-white">
+            <h3 className="text-lg font-semibold text-gray-800">Order Details</h3>
+          </div>
+        }
+        open={isModalVisible}
+        onCancel={closeModal}
+        footer={null}
+        centered
+        width={800}
+        styles={{
+          body: {
+            padding: '24px',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+          },
+        }}
       >
-        ×
-      </button> */}
-    </div>
-  }
-  open={isModalVisible}
-  onCancel={closeModal}
-  footer={null}
-  centered
-  width={800}
-  styles={{
-    body: {
-      padding: '24px',
-      backgroundColor: '#fff',
-      borderRadius: '8px',
-    },
-  }}
->
-  {selectedOrder && (
-    <div className="grid grid-cols-2 gap-6">
-      {/* Left Column: Customer Info */}
-      <div className="bg-white p-4 border border-gray-200 rounded-lg">
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Customer Name :</span>
-            <span className="text-gray-900">Jonson Emily</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Phone Number :</span>
-            <span className="text-gray-900">+8801XXXXXXXXX</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Email :</span>
-            <span className="text-gray-900">sjdhfhvigh@gmail.com</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Address :</span>
-            <span className="text-gray-900">RG89+C4G, Av. de los Shires, Quito 170135, Ecuador</span>
-          </div>
-        </div>
-      </div>
+        {selectedOrder && (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left Column: Customer Info */}
+            <div className="bg-white p-4 border border-gray-200 rounded-lg">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Customer Name :</span>
+                  <span className="text-gray-900">{selectedOrder.name || selectedOrder.user?.name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Phone Number :</span>
+                  <span className="text-gray-900">{selectedOrder.phone || selectedOrder.user?.phone || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Email :</span>
+                  <span className="text-gray-900">{selectedOrder.email || selectedOrder.user?.email || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Address :</span>
+                  <span className="text-gray-900">{selectedOrder.address || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
 
-      {/* Right Column: Order Info */}
-      <div className="bg-white p-4 border border-gray-200 rounded-lg">
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Product Name :</span>
-            <span className="text-gray-900">Red Wine</span>
+            {/* Right Column: Order Info */}
+            <div className="bg-white p-4 border border-gray-200 rounded-lg">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Order No :</span>
+                  <span className="text-gray-900">{selectedOrder.orderNo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Order Date :</span>
+                  <span className="text-gray-900">
+                    {new Date(selectedOrder.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Status :</span>
+                  <span className="text-gray-900">{selectedOrder.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Total Amount :</span>
+                  <span className="text-gray-900">${selectedOrder.amount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Payment Status :</span>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      selectedOrder.paymentStatus === 'CONFIRMED' 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-yellow-500 text-white'
+                    }`}
+                  >
+                    {selectedOrder.paymentStatus === 'CONFIRMED' ? 'Paid' : 'Pending'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Products :</span>
+                  <div className="text-right">
+                    {selectedOrder.orderProducts.map((op: any, idx: number) => (
+                      <div key={idx} className="text-gray-900">
+                        {op.product.name} (Qty: {op.quantity})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Order Date :</span>
-            <span className="text-gray-900">12/12/2025</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Product Id :</span>
-            <span className="text-gray-900">{selectedOrder.orderId}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Product QTY :</span>
-            <span className="text-gray-900">{selectedOrder.qty}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Total Amount :</span>
-            <span className="text-gray-900">${selectedOrder.totalAmount}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Payment :</span>
-            <span
-              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white"
-            >
-              Paid
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-</Modal>
+        )}
+      </Modal>
     </>
   );
 }

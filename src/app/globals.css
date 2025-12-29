@@ -224,3 +224,9 @@ input[type="number"] {
 .ant-something{
     background: transparent !important;
 }
+
+.custom-payment-modal .ant-modal-header {
+  background-color: white; /* Header background */
+  color: white;            /* Header text color */
+  border-bottom: none;     /* Optional: remove bottom border */
+}
