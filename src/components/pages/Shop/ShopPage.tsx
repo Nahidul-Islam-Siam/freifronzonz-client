@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
@@ -6,12 +7,11 @@ import { useState, useEffect, useMemo } from "react";
 import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
 import Image from "next/image";
 import ProductCard from "../cards/ProductCard";
-import { products } from "../cards/ProductsDummyData";
-import { useGetProductListQuery } from "@/redux/service/admin/productApi";
+import { ProductQueryParams, useGetProductListQuery } from "@/redux/service/admin/productApi";
 import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
 import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
 import { useGetSizeListQuery } from "@/redux/service/admin/bottleSizeApi";
-
+import { useSearchParams } from "next/navigation";
 
 export default function ShopPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -23,52 +23,92 @@ export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const { data: productsData } = useGetProductListQuery({});
+
   const { data: categoriesResponse } = useGetCategoryListQuery();
   const { data: sizeData } = useGetSizeListQuery();
+  const { data: brandsResponse } = useGetBrandListQuery();
 
   const categories = categoriesResponse?.data?.category || [];
   const itemsPerPage = 12;
+  const searchParams = useSearchParams();
 
-  const normalizeCategory = (cat: string): string => {
-    return cat.toLowerCase().replace(/\s+/g, "-");
+  // Sync URL → State
+  useEffect(() => {
+    const query = searchParams;
+
+    if (query.get("search")) {
+      setSearchQuery(query.get("search") || "");
+    }
+
+    const minPrice = Number(query.get("minPrice")) || 0;
+    const maxPrice = Number(query.get("maxPrice")) || 500;
+    setPriceRange([minPrice, maxPrice]);
+
+    if (query.get("categoryId")) {
+      setSelectedCategories([query.get("categoryId")!]);
+    } else {
+      setSelectedCategories([]);
+    }
+
+    if (query.get("brandId")) {
+      setSelectedBrands([query.get("brandId")!]);
+    } else {
+      setSelectedBrands([]);
+    }
+
+    if (query.get("sortBy")) {
+      setSortBy(query.get("sortBy") || "best-offer");
+    }
+
+    const pageFromUrl = Number(query.get("page")) || 1;
+    setCurrentPage(pageFromUrl);
+  }, [searchParams]);
+
+  // Build API params
+  const currentSearchParams: ProductQueryParams = {
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery || undefined,
+    minPrice: priceRange[0] > 0 ? String(priceRange[0]) : undefined,
+    maxPrice: priceRange[1] < 500 ? String(priceRange[1]) : undefined,
+    categoryId: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+    brandId: selectedBrands.length > 0 ? selectedBrands[0] : undefined,
+    ...(sortBy === "best-offer" ? { hasDiscount: "true" } : {}),
+    sortBy: sortBy === "best-offer" ? undefined : "price",
+    sortOrder: sortBy === "price-low" ? "asc" : sortBy === "price-high" ? "desc" : undefined,
   };
 
-  const {
-    data: brandsResponse,
-    isLoading,
-    isError,
-    refetch,
-  } = useGetBrandListQuery();
+  const { data: productsData, isLoading, isError } = useGetProductListQuery(currentSearchParams);
 
-  // const toggleDropdown = (type: "brand") => {
-  //   setActiveDropdown((prev) => (prev === type ? null : type))
-  // }
+  // State → URL
+  useEffect(() => {
+    const params = new URLSearchParams();
 
-  const CATEGORIES = useMemo(() => {
-    return [
-      {
-        id: "all",
-        name: "All Categories",
-        count: products.length,
-      },
-      ...categories.map((cat) => ({
-        id: cat.id,
-        name: cat.name,
-        count: products.filter((product) => product.category === cat.name)
-          .length,
-      })),
-    ];
-  }, [products, categories]);
+    if (searchQuery) params.set("search", searchQuery);
+    if (priceRange[0] > 0) params.set("minPrice", String(priceRange[0]));
+    if (priceRange[1] < 500) params.set("maxPrice", String(priceRange[1]));
+    if (selectedCategories[0]) params.set("categoryId", selectedCategories[0]);
+    if (selectedBrands[0]) params.set("brandId", selectedBrands[0]);
+    if (sortBy !== "best-offer") params.set("sortBy", sortBy);
+    if (currentPage > 1) params.set("page", String(currentPage));
 
+    const queryString = params.toString();
+    const newUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ""}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [searchQuery, priceRange, selectedCategories, selectedBrands, sortBy, currentPage]);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategories, priceRange, selectedBrands, searchQuery, sortBy]);
+
+  // Toggle functions
   const toggleCategory = (categoryId: string) => {
     if (categoryId === "all") {
       setSelectedCategories([]);
     } else {
       setSelectedCategories((prev) =>
-        prev.includes(categoryId)
-          ? prev.filter((id) => id !== categoryId)
-          : [...prev, categoryId]
+        prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
       );
     }
   };
@@ -79,81 +119,32 @@ export default function ShopPage() {
     );
   };
 
-  // const toggleBrand = (brand: string) => {
-  //   brandsResponse?.data.brand((prev) =>
-  //     prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-  //   );
-  // };
+  const toggleBrand = (brandId: string) => {
+    setSelectedBrands((prev) =>
+      prev.includes(brandId) ? prev.filter((id) => id !== brandId) : [...prev, brandId]
+    );
+  };
 
   const toggleDropdown = (dropdown: string) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      !searchQuery ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+  // Derived from API
+  const totalCount = productsData?.data?.total || 0;
+  const totalPages = productsData?.data?.totalPages || 1;
+  const startIndex = totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
 
-    const matchesPrice =
-      product.originalPrice >= priceRange[0] &&
-      product.originalPrice <= priceRange[1];
-
-    const productCategoryNormalized = normalizeCategory(product.category);
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes(productCategoryNormalized);
-
-    const matchesBottleSize =
-      selectedBottleSizes.length === 0 ||
-      selectedBottleSizes.includes(product.bottleSize);
-
-    const matchesBrand =
-      selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-
-    return (
-      matchesSearch &&
-      matchesPrice &&
-      matchesCategory &&
-      matchesBottleSize &&
-      matchesBrand
-    );
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === "price-low") return a.originalPrice - b.originalPrice;
-    if (sortBy === "price-high") return b.originalPrice - a.originalPrice;
-
-    if (sortBy === "best-offer") {
-      const aHasDiscount = a.discount !== null;
-      const bHasDiscount = b.discount !== null;
-      if (aHasDiscount && !bHasDiscount) return -1;
-      if (!aHasDiscount && bHasDiscount) return 1;
-      return b.originalPrice - a.originalPrice;
-    }
-    return 0;
-  });
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(sortedProducts.length / itemsPerPage)
-  );
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = sortedProducts.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    selectedCategories,
-    priceRange,
-    selectedBottleSizes,
-    selectedBrands,
-    searchQuery,
-    sortBy,
-  ]);
+  // Categories with count (approximate)
+  const CATEGORIES = useMemo(() => {
+    return [
+      { id: "all", name: "All Categories", count: totalCount },
+      ...categories.map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        count: 0, // real count requires backend enhancement
+      })),
+    ];
+  }, [categories, totalCount]);
 
   // Reusable Price Filter Component
   const PriceFilter = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -167,9 +158,7 @@ export default function ShopPage() {
             max={500}
             step={10}
             value={priceRange[0]}
-            onChange={(e) =>
-              setPriceRange([Number(e.target.value), priceRange[1]])
-            }
+            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400"
           />
           <input
@@ -178,9 +167,7 @@ export default function ShopPage() {
             max={500}
             step={10}
             value={priceRange[1]}
-            onChange={(e) =>
-              setPriceRange([priceRange[0], Number(e.target.value)])
-            }
+            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
             className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-400 ${
               isMobile ? "mt-2" : ""
             }`}
@@ -189,16 +176,14 @@ export default function ShopPage() {
       </div>
       <div className="text-sm text-gray-600">
         <span>Range: </span>
-        <span className="font-medium">
-          ${priceRange[0]} – ${priceRange[1]}
-        </span>
+        <span className="font-medium">${priceRange[0]} – ${priceRange[1]}</span>
       </div>
     </div>
   );
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         {/* Mobile Filter Button */}
         <div className="lg:hidden mb-4">
           <button
@@ -206,9 +191,7 @@ export default function ShopPage() {
             className="w-full bg-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
           >
             <SlidersHorizontal className="w-5 h-5 text-gray-600" />
-            <span className="font-medium text-gray-700">
-              Filters & Categories
-            </span>
+            <span className="font-medium text-gray-700">Filters & Categories</span>
           </button>
         </div>
 
@@ -217,9 +200,7 @@ export default function ShopPage() {
           <aside className="hidden lg:block lg:w-64 space-y-6">
             {/* Categories */}
             <div className="">
-              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
-                Categories
-              </h3>
+              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">Categories</h3>
               <div className="">
                 {CATEGORIES.map((category) => (
                   <div
@@ -235,9 +216,7 @@ export default function ShopPage() {
                     }`}
                     onClick={() => toggleCategory(category.id)}
                   >
-                    <span className="text-sm md:text-base font-normal text-[#968F8F]">
-                      {category.name}
-                    </span>
+                    <span className="text-sm md:text-base font-normal text-[#968F8F]">{category.name}</span>
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-sm text-[#968F8F]">
                       {category.count}
                     </span>
@@ -251,9 +230,7 @@ export default function ShopPage() {
 
             {/* Bottle Sizes */}
             <div className="">
-              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
-                Bottle Sizes
-              </h3>
+              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">Bottle Sizes</h3>
               <div className="grid grid-cols-4 gap-2">
                 {sizeData?.data?.sizes.map((size) => (
                   <button
@@ -273,16 +250,14 @@ export default function ShopPage() {
 
             {/* Brands */}
             <div className=" ">
-              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">
-                Select Brands
-              </h3>
+              <h3 className="text-base font-medium md:text-xl text-[#482817] mb-4">Select Brands</h3>
               <div className="grid grid-cols-3 gap-3">
-                {brandsResponse?.data.brand.map((brand) => (
+                {brandsResponse?.data?.brand.map((brand) => (
                   <button
-                    key={brand.name}
-                    onClick={() => brand.name}
+                    key={brand.id} // ✅ Use brand.id
+                    onClick={() => toggleBrand(brand.id)} // ✅ FIXED!
                     className={`border-2 rounded-lg transition-all ${
-                      selectedBrands.includes(brand.name)
+                      selectedBrands.includes(brand.id)
                         ? "border-orange-400 bg-orange-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
@@ -321,15 +296,10 @@ export default function ShopPage() {
                 <div className="p-4 space-y-6">
                   {/* Categories */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">
-                      Categories
-                    </h3>
+                    <h3 className="font-bold text-[#482817] mb-4">Categories</h3>
                     <div className="space-y-3">
                       {CATEGORIES.map((category) => (
-                        <div
-                          key={category.id}
-                          className="flex items-center space-x-2"
-                        >
+                        <div key={category.id} className="flex items-center space-x-2">
                           <input
                             type="checkbox"
                             id={`mobile-${category.id}`}
@@ -353,9 +323,7 @@ export default function ShopPage() {
 
                   {/* Bottle Size */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">
-                      Bottle Size
-                    </h3>
+                    <h3 className="font-bold text-[#482817] mb-4">Bottle Size</h3>
                     <div className="grid grid-cols-4 gap-2">
                       {sizeData?.data?.sizes.map((size) => (
                         <button
@@ -375,22 +343,20 @@ export default function ShopPage() {
 
                   {/* Brands */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-[#482817] mb-4">
-                      Select Brands
-                    </h3>
+                    <h3 className="font-bold text-[#482817] mb-4">Select Brands</h3>
                     <div className="grid grid-cols-3 gap-3">
-                      {brandsResponse?.data.brand.map((brand) => (
+                      {brandsResponse?.data?.brand.map((brand) => (
                         <button
-                          key={brand.name}
-                          onClick={() => brand.name}
+                          key={brand.id} // ✅
+                          onClick={() => toggleBrand(brand.id)} // ✅ FIXED!
                           className={`border-2 rounded-lg p-2 transition-all ${
-                            selectedBrands.includes(brand.name)
+                            selectedBrands.includes(brand.id)
                               ? "border-orange-400 bg-orange-50"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
                           <Image
-                            src={ "/images/brand-1.png"}
+                            src={"/images/brand-1.png"}
                             alt={brand.name}
                             width={60}
                             height={60}
@@ -417,9 +383,7 @@ export default function ShopPage() {
             <div className="p-4 rounded-lg mb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="text-xl md:text-2xl font-semibold text-[#968F8F]">
-                  Showing {startIndex + 1}–
-                  {Math.min(startIndex + itemsPerPage, sortedProducts.length)}{" "}
-                  of {sortedProducts.length} item(s)
+                  Showing {startIndex}–{Math.min(startIndex + itemsPerPage - 1, totalCount)} of {totalCount} item(s)
                 </div>
 
                 <div className="py-4 px-4 sm:px-6 lg:px-8">
@@ -482,16 +446,13 @@ export default function ShopPage() {
                           <span>
                             {selectedBrands.length === 0
                               ? "Brand"
-                              : brandsResponse?.data?.brand.find(
-                                  (b) => b.id === selectedBrands[0]
-                                )?.name}
+                              : brandsResponse?.data?.brand.find((b) => b.id === selectedBrands[0])?.name || "Brand"}
                           </span>
                           <ChevronDown className="w-4 h-4 text-gray-600" />
                         </button>
 
                         {activeDropdown === "brand" && (
                           <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
-                            {/* All Brands */}
                             <button
                               onClick={() => {
                                 setSelectedBrands([]);
@@ -501,13 +462,11 @@ export default function ShopPage() {
                             >
                               All Brands
                             </button>
-
-                            {/* Brand list from API */}
                             {brandsResponse?.data?.brand.map((brand) => (
                               <button
                                 key={brand.id}
                                 onClick={() => {
-                                  setSelectedBrands([brand.id]); // single select for now
+                                  setSelectedBrands([brand.id]);
                                   setActiveDropdown(null);
                                 }}
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
@@ -550,9 +509,7 @@ export default function ShopPage() {
                                         : "border-gray-300"
                                     }`}
                                   >
-                                    {selectedCategories.includes(cat.id) && (
-                                      <Check className="w-3 h-3 text-white" />
-                                    )}
+                                    {selectedCategories.includes(cat.id) && <Check className="w-3 h-3 text-white" />}
                                   </div>
                                   <span className="text-sm">{cat.name}</span>
                                 </label>
@@ -604,17 +561,15 @@ export default function ShopPage() {
             </div>
 
             {/* Product Grid */}
-            {paginatedProducts.length > 0 ? (
+            {productsData?.data?.products && productsData.data.products.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {productsData?.data?.products.map((product) => (
+                {productsData.data.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
               <div className="bg-white rounded-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">
-                  No products found matching your filters.
-                </p>
+                <p className="text-gray-500 text-lg">No products found matching your filters.</p>
               </div>
             )}
 
@@ -650,9 +605,7 @@ export default function ShopPage() {
                 })}
 
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
