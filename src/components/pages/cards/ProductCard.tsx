@@ -6,8 +6,10 @@ import { Heart, Search, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useDispatch } from 'react-redux';
-import { addToCart } from '@/redux/slices/cartSlice';
+import { addToCart as addToLocalCart, removeFromCart } from '@/redux/slices/cartSlice';
+
 import Swal from 'sweetalert2';
+import { useAddToCartMutation } from "@/redux/service/admin/cartApi";
 
 // ✅ Interface that exactly matches your API response
 interface Product {
@@ -40,6 +42,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const dispatch = useDispatch();
+  const [addToCartApi, { isLoading }] = useAddToCartMutation(); // ✅ RTK Query mutation
 
   const renderStars = (rating: number) => {
     return (
@@ -53,14 +56,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     );
   };
 
-  // ✅ Helper to safely format price strings
   const formatPrice = (priceStr: string): string => {
     if (!priceStr) return "0.00";
     const priceNum = parseFloat(priceStr);
     return isNaN(priceNum) ? "0.00" : priceNum.toFixed(2);
   };
 
-  // ✅ Calculate original price for discount display
   const getOriginalPrice = (): number | null => {
     if (product.discount && parseInt(product.discountPercent) > 0) {
       const currentPrice = parseFloat(product.price);
@@ -71,12 +72,13 @@ export default function ProductCard({ product }: ProductCardProps) {
     return null;
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  // ✅ Hybrid Add to Cart: Local + API
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // ✅ Dispatch with correct fields - ID should be string (not Number)
-    dispatch(addToCart({
-     id: product.id, // ✅ Keep as string (matches your API)
+    // 1️⃣ Update LOCAL cart instantly (optimistic UI)
+    const cartProduct = {
+      id: product.id,
       name: product.name,
       image: product.images[0] ? `http://localhost:4200/${product.images[0]}` : "/placeholder.svg",
       price: parseFloat(formatPrice(product.price)),
@@ -85,16 +87,37 @@ export default function ProductCard({ product }: ProductCardProps) {
       category: product.category.name,
       bottleSize: product.size,
       brand: product.brand.name,
-    }));
+    };
+    
+    dispatch(addToLocalCart(cartProduct));
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Added to Cart!',
-      text: `${product.name} has been added to your cart.`,
-      confirmButtonColor: '#AF6900',
-      timer: 2000,
-      showConfirmButton: false,
-    });
+    // 2️⃣ Sync with REAL API
+    try {
+      await addToCartApi({
+        productId: product.id,
+        quantity: "1",
+      }).unwrap();
+
+      // ✅ API Success: Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Added to Cart!',
+        text: `${product.name} has been added to your cart.`,
+        confirmButtonColor: '#AF6900',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      // ❌ API Failed: Revert local cart
+      dispatch(removeFromCart(product.id));
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops!',
+        text: 'Failed to add to cart. Please try again.',
+        confirmButtonColor: '#d33',
+      });
+    }
   };
 
   return (
@@ -108,7 +131,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
         />
 
-        {/* ✅ Show discount badge if product has discount */}
         {product.discount && product.discountPercent && (
           <div className="absolute top-3 right-3 bg-orange-400 text-white px-2 py-1 rounded text-xs font-bold">
             -{product.discountPercent}%
@@ -118,15 +140,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity p-2">
           <button 
             onClick={handleAddToCart}
-            className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100"
+            disabled={isLoading} // ✅ Disable during API call
+            className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100 disabled:opacity-50"
             aria-label="Add to cart"
           >
             <ShoppingCart className="w-5 h-5 text-[#482817]" />
           </button>
-          
-          {/* <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
-            <Search className="w-5 h-5 text-[#482817]" />
-          </button> */}
           
           <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
             <Heart className="w-5 h-5 text-[#482817]" />
@@ -146,24 +165,22 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
 
-<div className="flex items-baseline justify-center gap-2">
-  {getOriginalPrice() ? (
-    <>
-      {/* ✅ Strikethrough original (higher) price */}
-      <span className="text-xs text-gray-500 line-through">
-        ${getOriginalPrice()!.toFixed(2)}
-      </span>
-      {/* ✅ Bold discounted (current) price */}
-      <span className="text-sm font-bold text-[#968F8F]">
-        ${formatPrice(product.price)}
-      </span>
-    </>
-  ) : (
-    <span className="text-sm font-bold text-[#968F8F]">
-      ${formatPrice(product.price)}
-    </span>
-  )}
-</div>
+        <div className="flex items-baseline justify-center gap-2">
+          {getOriginalPrice() ? (
+            <>
+              <span className="text-xs text-gray-500 line-through">
+                ${getOriginalPrice()!.toFixed(2)}
+              </span>
+              <span className="text-sm font-bold text-[#968F8F]">
+                ${formatPrice(product.price)}
+              </span>
+            </>
+          ) : (
+            <span className="text-sm font-bold text-[#968F8F]">
+              ${formatPrice(product.price)}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

@@ -9,6 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout } from "@/redux/features/auth"; // Adjust path if needed
 import { useRouter } from "next/navigation";
+import { useGetCartListQuery } from "@/redux/service/admin/cartApi";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,20 +20,22 @@ export default function Navbar() {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const role = useSelector((state: RootState) => state?.auth.user?.role);
 // ✅ Add this line
-const cartCount = useSelector((state: RootState) => state?.cart?.count);
+const {  data: cartData } = useGetCartListQuery();
+
+const cartCount = cartData?.data.summary.totalItems || 0;
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setProfileMenuOpen(false);
-      }
-    };
+// Close dropdown when clicking outside
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+      setProfileMenuOpen(false);
+    }
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
 
   const handleLogout = () => {
     dispatch(logout());

@@ -6,16 +6,15 @@ import Image from "next/image";
 import { Minus, Plus, ZoomIn, Facebook, Twitter, Linkedin } from "lucide-react";
 import Link from "next/link";
 import { useGetProductByIdQuery } from "@/redux/service/admin/productApi";
+import { useAddToCartMutation } from "@/redux/service/admin/cartApi"; // ✅ NEW
 import { useParams } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { addToCart } from "@/redux/slices/cartSlice"; // ✅ Adjust path if needed
+import { addToCart as addToLocalCart, removeFromCart } from "@/redux/slices/cartSlice"; // ✅ RENAMED
 import Swal from "sweetalert2";
 
-// Backend base URL (update if your API runs elsewhere)
 const API_BASE_URL = "http://localhost:4200";
 const DUMMY_IMAGE = "https://via.placeholder.com/500x500?text=Product+Image";
 
-// Helper to resolve full image URL
 const getImageUrl = (imgPath: string): string => {
   if (!imgPath) return DUMMY_IMAGE;
   if (imgPath.startsWith("http")) return imgPath;
@@ -26,12 +25,13 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState(DUMMY_IMAGE);
   const [activeTab, setActiveTab] = useState<"description" | "reviews">("description");
+  const [isAdding, setIsAdding] = useState(false); // ✅ Loading state
 
   const { id } = useParams();
   const { data: product, isLoading, isError } = useGetProductByIdQuery(id as string);
+  const [addToCartApi] = useAddToCartMutation(); // ✅ NEW
   const dispatch = useDispatch();
 
-  // Update images when product loads
   useEffect(() => {
     if (product?.data?.images && product.data.images.length > 0) {
       const imgUrls = product.data.images.map(getImageUrl);
@@ -50,7 +50,8 @@ export default function ProductDetailPage() {
     if (quantity < maxQty) setQuantity(quantity + 1);
   };
 
-  const handleAddToCart = () => {
+  // ✅ HYBRID ADD TO CART (with quantity as string for API)
+  const handleAddToCart = async () => {
     if (!product?.data?.stock) {
       Swal.fire({
         icon: "error",
@@ -61,11 +62,13 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const item = {
+    setIsAdding(true);
+
+    const cartItem = {
       id: product.data.id,
       name: product.data.name,
       image: getImageUrl(product.data.images?.[0] || ""),
-      price: parseFloat(finalPrice), // discounted price
+      price: parseFloat(finalPrice),
       originalPrice: discount && discountPercent
         ? parseFloat(product.data.price)
         : parseFloat(finalPrice),
@@ -75,16 +78,36 @@ export default function ProductDetailPage() {
       quantity: quantity,
     };
 
-    dispatch(addToCart(item as any));
+    // 1️⃣ Update LOCAL cart
+    dispatch(addToLocalCart(cartItem as any));
 
-    Swal.fire({
-      icon: "success",
-      title: "Added to Cart!",
-      text: `${quantity} × ${product.data.name} has been added to your cart.`,
-      confirmButtonColor: "#AF6900",
-      timer: 2000,
-      showConfirmButton: false,
-    });
+    // 2️⃣ Call API with QUANTITY AS STRING
+    try {
+      await addToCartApi({
+        productId: product.data.id,
+        quantity: quantity.toString(), // 🔑 Sent as string to match backend
+      }).unwrap();
+
+      Swal.fire({
+        icon: "success",
+        title: "Added to Cart!",
+        text: `${quantity} × ${product.data.name} has been added to your cart.`,
+        confirmButtonColor: "#AF6900",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error: any) {
+      // 3️⃣ Rollback on API failure
+      dispatch(removeFromCart(product.data.id));
+      Swal.fire({
+        icon: "error",
+        title: "Oops!",
+        text: error?.data?.message || "Failed to add to cart. Please try again.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -105,7 +128,6 @@ export default function ProductDetailPage() {
     reviews = [],
   } = product.data;
 
-  // Calculate final (discounted) price as string for display
   const finalPrice = discount && discountPercent
     ? (parseFloat(price) * (1 - parseFloat(discountPercent) / 100)).toFixed(2)
     : price;
@@ -224,9 +246,10 @@ export default function ProductDetailPage() {
 
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-[#9E845C] font-marcellus font-normal hover:bg-[#B36D25] text-white text-sm md:text-base py-3 px-6 transition-colors"
+                  disabled={isAdding}
+                  className="flex-1 bg-[#9E845C] font-marcellus font-normal hover:bg-[#B36D25] text-white text-sm md:text-base py-3 px-6 transition-colors disabled:opacity-50"
                 >
-                  ADD TO CART
+                  {isAdding ? "Adding..." : "ADD TO CART"}
                 </button>
 
                 <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
@@ -248,9 +271,10 @@ export default function ProductDetailPage() {
 
               <button
                 onClick={handleAddToCart}
-                className="w-full bg-[#AF6900] font-marcellus hover:bg-[#8A5620] text-sm md:text-base text-white font-medium py-3 px-6 transition-colors"
+                disabled={isAdding}
+                className="w-full bg-[#AF6900] font-marcellus hover:bg-[#8A5620] text-sm md:text-base text-white font-medium py-3 px-6 transition-colors disabled:opacity-50"
               >
-                BUY NOW
+                {isAdding ? "Adding..." : "BUY NOW"}
               </button>
 
               {/* Product Details */}
