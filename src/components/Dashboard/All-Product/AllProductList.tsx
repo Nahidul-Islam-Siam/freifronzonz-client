@@ -2,12 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Card, Table, Dropdown, Button, Modal, Skeleton } from "antd";
-import { EllipsisOutlined } from "@ant-design/icons";
-import { useState, useEffect } from "react";
+import { Card, Table, Dropdown, Button, Modal, Skeleton, Input, Select, Switch } from "antd";
+import { EllipsisOutlined, SearchOutlined } from "@ant-design/icons";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { useDeleteProductMutation, useGetProductListQuery } from "@/redux/service/admin/productApi";
+import { useDeleteProductMutation, useGetProductByAdminQuery } from "@/redux/service/admin/productApi";
 import Swal from "sweetalert2";
+import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
+import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
 
 /** Interface for product data */
 interface ProductRecord {
@@ -39,36 +41,59 @@ export default function AllProductList({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [deleteProduct] = useDeleteProductMutation();
   
-  // ✅ Load ALL products at once (no pagination in API)
-  const {  data: productsResponse, isLoading, isError } = useGetProductListQuery({ 
-    page: 1, 
-    limit: 1000 // Load all products
-  });
+  // 🔍 Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
+  const [brandId, setBrandId] = useState<string | undefined>(undefined);
+  const [hasDiscount, setHasDiscount] = useState<boolean | undefined>(undefined);
+  const [inStock, setInStock] = useState<boolean | undefined>(undefined);
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
 
-  const [allTransformedProducts, setAllTransformedProducts] = useState<ProductRecord[]>([]);
-  
-  // ✅ Transform all products once 
-  useEffect(() => {
-    if (productsResponse?.data?.products) {
-      const transformed = productsResponse.data.products.map((product: any) => ({
-        key: product.id,
-        id: product.id,
-        productId: product.id,
-        productName: product.name,
-        brandName: product.brand.name,
-        category: product.category.name,
-        totalProduct: parseInt(product.quantity) || 0,
-        totalSales: 0,
-        available: product.stock ? parseInt(product.quantity) || 0 : 0,
-        price: parseFloat(product.price) || 0,
-        totalSalesAmount: 0,
-        images: product.images || [],
-      }));
-      setAllTransformedProducts(transformed);
-    }
-  }, [productsResponse]);
+  // Fetch data
+  const { data: categoriesData } = useGetCategoryListQuery();
+  const { data: brandsData } = useGetBrandListQuery();
 
-  // ✅ Frontend pagination
+  const categories = categoriesData?.data?.category || [];
+  const brands = brandsData?.data?.brand || [];
+
+  // ✅ Build query params for admin API
+  const queryParams = {
+    page: 1, // We'll load all (or paginated) from API, but for now load all
+    limit: 1000, // Load all for filtering (or use real pagination later)
+    search: searchTerm || undefined,
+    categoryId: categoryId || undefined,
+    brandId: brandId || undefined,
+    hasDiscount: hasDiscount !== undefined ? (hasDiscount ? "true" : "false") : undefined,
+    inStock: inStock !== undefined ? (inStock ? "true" : "false") : undefined,
+    sortBy: sortBy || undefined,
+    sortOrder: sortOrder || undefined,
+  };
+
+  const {  data: productsByAdminResponse, isLoading } = useGetProductByAdminQuery(queryParams);
+
+  // ✅ Transform admin products → ProductRecord
+  const allTransformedProducts = useMemo(() => {
+    if (!productsByAdminResponse?.data?.products) return [];
+    
+    return productsByAdminResponse.data.products.map((product) => ({
+      key: product.id,
+      id: product.id,
+      productId: product.id,
+      productName: product.name,
+      brandName: product.brand.name,
+      category: product.category.name,
+      totalProduct: parseInt(product.quantity) || 0,
+      // 👇 Use statistics from API
+      totalSales: product.statistics.totalQuantitySold || 0,
+      available: product.statistics.totalAvailable || 0,
+      price: parseFloat(product.price) || 0,
+      totalSalesAmount: product.statistics.totalRevenue || 0,
+      images: product.images || [],
+    }));
+  }, [productsByAdminResponse]);
+
+  // ✅ Frontend pagination (since we load all)
   const pageSize = 10;
   const totalPages = Math.ceil(allTransformedProducts.length / pageSize);
   const paginatedProducts = allTransformedProducts.slice(
@@ -76,12 +101,13 @@ export default function AllProductList({
     currentPage * pageSize
   );
 
-useEffect(() => {
-  if (currentPage > totalPages && totalPages > 0) {
-    setCurrentPage(1);
-  }
-}, [totalPages, currentPage]);
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
+  // Modal handlers
   const showDetails = (record: ProductRecord) => {
     setSelectedProduct(record);
     setIsModalVisible(true);
@@ -104,7 +130,6 @@ useEffect(() => {
           timer: 2000,
           showConfirmButton: false,  
         });
-        // ✅ Force refresh to reload all data
         window.location.reload();
       } else {
         Swal.fire({
@@ -226,125 +251,150 @@ useEffect(() => {
     return (
       <Card
         className="custom-all-product-card"
-        title={
-          <span className="text-lg font-semibold text-[#A7997D]">
-            All Product
-          </span>
-        }
-        style={{
-          borderRadius: "0",
-          border: "none",
-          backgroundColor: "transparent",
-        }}
-        bodyStyle={{
-          padding: 0,
-          backgroundColor: "transparent",
-        }}
+        title={<span className="text-lg font-semibold text-[#A7997D]">All Product</span>}
+        style={{ borderRadius: "0", border: "none", backgroundColor: "transparent" }}
+        styles={{ body: { padding: 0, backgroundColor: "transparent" } }}
       >
         <Skeleton active paragraph={{ rows: 5 }} />
       </Card>
     );
   }
 
-  if (isError || !productsResponse?.data) {
-    return (
-      <Card
-        className="custom-all-product-card"
-        title={
-          <span className="text-lg font-semibold text-[#A7997D]">
-            All Product
-          </span>
-        }
-        style={{
-          borderRadius: "0",
-          border: "none",
-          backgroundColor: "transparent",
-        }}
-        bodyStyle={{
-          padding: 20,
-          backgroundColor: "transparent",
-        }}
-      >
-        <div className="text-center text-red-500">Failed to load products</div>
-      </Card>
-    );
-  }
+  // if (isError || !productsByAdminResponse?.data) {
+  //   return (
+  //     <Card
+  //       className="custom-all-product-card"
+  //       title={<span className="text-lg font-semibold text-[#A7997D]">All Product</span>}
+  //       style={{ borderRadius: "0", border: "none", backgroundColor: "transparent" }}
+  //       styles={{ body: { padding: 20, backgroundColor: "transparent" } }}
+  //     >
+  //       <div className="text-center text-red-500">Failed to load products</div>
+  //     </Card>
+  //   );
+  // }
 
   return (
     <>
       <Card
         className="custom-all-product-card"
         title={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "18px",
-                color: "#A7997D",
-                fontWeight: "600",
-              }}
-            >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            <span style={{ fontSize: "18px", color: "#A7997D", fontWeight: "600" }}>
               All Product
             </span>
           </div>
         }
-        style={{
-          borderRadius: "0",
-          border: "none",
-          backgroundColor: "transparent",
-  overflow: "visible",
-
-        }}
-        bodyStyle={{
-          padding: 0,
-          backgroundColor: "transparent",
-        }}
+        style={{ borderRadius: "0", border: "none", backgroundColor: "transparent", overflow: "visible" }}
+        styles={{ body: { padding: 0, backgroundColor: "transparent" } }}
       >
-<div style={{ overflowX: "auto", width: "100%" }}>
+        {/* 🔍 Filter Bar */}
+        <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
+            <Input
+              placeholder="Search products..."
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              allowClear
+            />
+
+            {/* Category */}
+            <Select
+              placeholder="Filter by Category"
+              value={categoryId}
+              onChange={(value) => setCategoryId(value || undefined)}
+              allowClear
+              options={categories.map((cat: any) => ({ label: cat.name, value: cat.id }))}
+            />
+
+            {/* Brand */}
+            <Select
+              placeholder="Filter by Brand"
+              value={brandId}
+              onChange={(value) => setBrandId(value || undefined)}
+              allowClear
+              options={brands.map((brand: any) => ({ label: brand.name, value: brand.id }))}
+            />
+
+            {/* Discount */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-700">Has Discount</span>
+              <Switch
+                checked={hasDiscount === true}
+                onChange={(checked) => setHasDiscount(checked ? true : false)}
+                checkedChildren="Yes"
+                unCheckedChildren="No"
+              />
+            </div>
+
+            {/* Stock */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-700">In Stock</span>
+              <Switch
+                checked={inStock === true}
+                onChange={(checked) => setInStock(checked ? true : false)}
+                checkedChildren="Yes"
+                unCheckedChildren="No"
+              />
+            </div>
+
+            {/* Sort */}
+            <Select
+              placeholder="Sort By"
+              value={sortBy}
+              onChange={(value) => {
+                setSortBy(value || undefined);
+                setSortOrder(value ? "desc" : undefined); // default desc
+              }}
+              allowClear
+              options={[
+                { label: "Price (High to Low)", value: "price" },
+                { label: "Price (Low to High)", value: "price" },
+                { label: "Name (A-Z)", value: "name" },
+              ]}
+            />
+          </div>
+        </div>
+
+ 
+ <div style={{ overflowX: "auto", width: "100%" }}>
   <Table
     columns={columns}
     dataSource={paginatedProducts}
     pagination={false}
     scroll={{ x: 1000 }}
+    locale={{ emptyText: "No products found matching your filters." }}
   />
 </div>
+    
 
-{/* ✅ Pagination (single wrapper, always visible) */}
-<div className="custom-pagination">
-  <Button
-    disabled={currentPage === 1}
-    onClick={() => setCurrentPage(currentPage - 1)}
-  >
-    Prev
-  </Button>
+        {/* Pagination */}
+        <div className="custom-pagination">
+          <Button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+          >
+            Prev
+          </Button>
 
-  {Array.from({ length: totalPages || 1 }).map((_, i) => (
-    <Button
-      key={i}
-      type={currentPage === i + 1 ? "primary" : "default"}
-      onClick={() => setCurrentPage(i + 1)}
-    >
-      {i + 1}
-    </Button>
-  ))}
+          {Array.from({ length: totalPages || 1 }).map((_, i) => (
+            <Button
+              key={i}
+              type={currentPage === i + 1 ? "primary" : "default"}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </Button>
+          ))}
 
-  <Button
-    disabled={currentPage === totalPages || totalPages === 0}
-    onClick={() => setCurrentPage(currentPage + 1)}
-  >
-    Next
-  </Button>
-</div>
-
-{/* )} */}
-
-
+          <Button
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            Next
+          </Button>
+        </div>
 
         {/* --- Global Styles --- */}
         <style jsx global>{`
@@ -370,7 +420,6 @@ useEffect(() => {
             font-size: 18px !important;
           }
 
-          /* Table Header */
           .custom-all-product-card .ant-table-thead > tr > th {
             background-color: #f5f5f5 !important;
             color: #333 !important;
@@ -380,21 +429,14 @@ useEffect(() => {
             font-size: 14px;
           }
 
-          .custom-all-product-card
-            .ant-table-thead
-            > tr:first-child
-            > th:first-child {
+          .custom-all-product-card .ant-table-thead > tr:first-child > th:first-child {
             border-top-left-radius: 8px !important;
           }
 
-          .custom-all-product-card
-            .ant-table-thead
-            > tr:first-child
-            > th:last-child {
+          .custom-all-product-card .ant-table-thead > tr:first-child > th:last-child {
             border-top-right-radius: 8px !important;
           }
 
-          /* Table Body Rows */
           .custom-all-product-card .ant-table-tbody > tr {
             border-bottom: 1px solid #e5e7eb !important;
           }
@@ -403,10 +445,9 @@ useEffect(() => {
             background-color: #fafafa !important;
           }
 
-          /* Custom Pagination */
           .custom-pagination {
             display: flex;
-            justify-content: center;
+            justify-content: end;
             gap: 8px;
             margin: 20px 0;
           }
@@ -425,13 +466,7 @@ useEffect(() => {
 
       {/* Product Details Modal */}
       <Modal
-        title={
-          <div className="flex justify-between items-center w-full bg-white">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Product Details
-            </h3>
-          </div>
-        }
+        title={<h3 className="text-lg font-semibold text-gray-800">Product Details</h3>}
         open={isModalVisible}
         onCancel={closeModal}
         footer={null}
@@ -447,28 +482,24 @@ useEffect(() => {
       >
         {selectedProduct && (
           <div className="space-y-6">
-            {/* Product Image */}
             <div className="flex justify-center">
               <Image
                 src={selectedProduct.images[0] 
                   ? `http://localhost:4200/${selectedProduct.images[0]}`
                   : "/placeholder.svg"
                 }
-                width={400}
-                height={400}
+                width={128}
+                height={128}
                 alt="Product"
                 className="w-32 h-32 object-contain rounded-md"
                 style={{ border: "1px solid #e5e7eb", padding: "12px" }}
               />
             </div>
 
-            {/* Product Info Table */}
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">
-                    Product Name
-                  </span>
+                  <span className="font-medium text-gray-700">Product Name</span>
                   <span className="text-gray-900">{selectedProduct.productName}</span>
                 </div>
               </div>
@@ -486,48 +517,32 @@ useEffect(() => {
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
-                  <span className="font-medium text-[#A7997D]">
-                    Product Categories:
-                  </span>
+                  <span className="font-medium text-[#A7997D]">Category</span>
                   <span className="text-gray-900">{selectedProduct.category}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
-                  <span className="font-medium text-[#A7997D]">
-                    Bottle Size
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedProduct.totalProduct > 0 ? "500 ml" : "N/A"}
-                  </span>
+                  <span className="font-medium text-[#A7997D]">Total Product</span>
+                  <span className="text-gray-900">{selectedProduct.totalProduct}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
-                  <span className="font-medium text-[#A7997D]">
-                    Total Product
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedProduct.totalProduct}
-                  </span>
+                  <span className="font-medium text-[#A7997D]">Total Sales</span>
+                  <span className="text-gray-900">{selectedProduct.totalSales}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-b border-gray-200">
                 <div className="flex justify-between">
-                  <span className="font-medium text-[#A7997D]">
-                    Total Available
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedProduct.available}
-                  </span>
+                  <span className="font-medium text-[#A7997D]">Available</span>
+                  <span className="text-gray-900">{selectedProduct.available}</span>
                 </div>
               </div>
               <div className="px-4 py-3">
                 <div className="flex justify-between">
                   <span className="font-medium text-[#A7997D]">Price</span>
-                  <span className="text-gray-900">
-                    ${selectedProduct.price}
-                  </span>
+                  <span className="text-gray-900">${selectedProduct.price}</span>
                 </div>
               </div>
             </div>
