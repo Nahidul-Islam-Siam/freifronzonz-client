@@ -45,11 +45,11 @@ export const bottleSizeApi = baseApi.injectEndpoints({
     }),
 
     // CREATE size
-    createSize: builder.mutation<CreateSizeResponse, FormData>({
-      query: (formData) => ({
+    createSize: builder.mutation<CreateSizeResponse, { name: string }>({
+      query: ({ name }) => ({
         url: "/size",
         method: "POST",
-        body: formData,
+        body: { name },
       }),
       invalidatesTags: ["size"],
     }),
@@ -81,4 +81,5 @@ export const {
     useGetSizeListQuery,
     useCreateSizeMutation,
     useUpdateSizeMutation,
+    useDeleteSizeMutation,
 } = bottleSizeApi;

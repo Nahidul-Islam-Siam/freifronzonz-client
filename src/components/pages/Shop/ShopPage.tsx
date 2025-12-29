@@ -10,17 +10,8 @@ import { products } from "../cards/ProductsDummyData";
 import { useGetProductListQuery } from "@/redux/service/admin/productApi";
 import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
 import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
+import { useGetSizeListQuery } from "@/redux/service/admin/bottleSizeApi";
 
-const BOTTLE_SIZES = ["150ml", "375ml", "750ml", "1.5L", "3L"];
-
-const BRANDS = [
-  { name: "VESEVO", logo: "/images/brand-1.png" },
-  { name: "ARGENTINA", logo: "/images/brand-2.png" },
-  { name: "JACK DANIEL'S", logo: "/images/brand-3.png" },
-  { name: "BAREFOOT", logo: "/images/brand-4.png" },
-  { name: "JACK BOTTLE", logo: "/images/brand-5.png" },
-  { name: "VALDO", logo: "/images/brand-5.png" },
-];
 
 export default function ShopPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -33,26 +24,26 @@ export default function ShopPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { data: productsData } = useGetProductListQuery({});
-  const { data: categoriesResponse} = useGetCategoryListQuery();
-  const categories = categoriesResponse?.data?.category || []
+  const { data: categoriesResponse } = useGetCategoryListQuery();
+  const { data: sizeData } = useGetSizeListQuery();
+
+  const categories = categoriesResponse?.data?.category || [];
   const itemsPerPage = 12;
-  
 
   const normalizeCategory = (cat: string): string => {
     return cat.toLowerCase().replace(/\s+/g, "-");
   };
 
-    const {
+  const {
     data: brandsResponse,
     isLoading,
     isError,
     refetch,
   } = useGetBrandListQuery();
 
-// const toggleDropdown = (type: "brand") => {
-//   setActiveDropdown((prev) => (prev === type ? null : type))
-// }
-
+  // const toggleDropdown = (type: "brand") => {
+  //   setActiveDropdown((prev) => (prev === type ? null : type))
+  // }
 
   const CATEGORIES = useMemo(() => {
     return [
@@ -64,15 +55,11 @@ export default function ShopPage() {
       ...categories.map((cat) => ({
         id: cat.id,
         name: cat.name,
-        count: products.filter((product) => product.category === cat.name).length,
-      }))
+        count: products.filter((product) => product.category === cat.name)
+          .length,
+      })),
     ];
-  } , [products, categories]);
-
-
-
-  
-
+  }, [products, categories]);
 
   const toggleCategory = (categoryId: string) => {
     if (categoryId === "all") {
@@ -97,8 +84,6 @@ export default function ShopPage() {
   //     prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
   //   );
   // };
-
-
 
   const toggleDropdown = (dropdown: string) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
@@ -138,7 +123,7 @@ export default function ShopPage() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === "price-low") return a.originalPrice - b.originalPrice;
     if (sortBy === "price-high") return b.originalPrice - a.originalPrice;
-    if (sortBy === "wishlist") return b.rating - a.rating;
+
     if (sortBy === "best-offer") {
       const aHasDiscount = a.discount !== null;
       const bHasDiscount = b.discount !== null;
@@ -270,17 +255,17 @@ export default function ShopPage() {
                 Bottle Sizes
               </h3>
               <div className="grid grid-cols-4 gap-2">
-                {BOTTLE_SIZES.map((size) => (
+                {sizeData?.data?.sizes.map((size) => (
                   <button
-                    key={size}
-                    onClick={() => toggleBottleSize(size)}
+                    key={size.id}
+                    onClick={() => toggleBottleSize(size.name)}
                     className={`px-2 py-4 text-xs rounded border transition-colors ${
-                      selectedBottleSizes.includes(size)
+                      selectedBottleSizes.includes(size.name)
                         ? "bg-orange-400 text-white border-orange-400"
                         : "text-gray-700 border-gray-300 hover:border-orange-300"
                     }`}
                   >
-                    {size}
+                    {size.name}
                   </button>
                 ))}
               </div>
@@ -295,7 +280,7 @@ export default function ShopPage() {
                 {brandsResponse?.data.brand.map((brand) => (
                   <button
                     key={brand.name}
-                    onClick={() => (brand.name)}
+                    onClick={() => brand.name}
                     className={`border-2 rounded-lg transition-all ${
                       selectedBrands.includes(brand.name)
                         ? "border-orange-400 bg-orange-50"
@@ -372,17 +357,17 @@ export default function ShopPage() {
                       Bottle Size
                     </h3>
                     <div className="grid grid-cols-4 gap-2">
-                      {BOTTLE_SIZES.map((size) => (
+                      {sizeData?.data?.sizes.map((size) => (
                         <button
-                          key={size}
-                          onClick={() => toggleBottleSize(size)}
+                          key={size.id}
+                          onClick={() => toggleBottleSize(size.name)}
                           className={`px-2 py-1.5 text-xs rounded border transition-colors ${
-                            selectedBottleSizes.includes(size)
+                            selectedBottleSizes.includes(size.name)
                               ? "bg-orange-400 text-white border-orange-400"
                               : "bg-white text-gray-700 border-gray-300 hover:border-orange-300"
                           }`}
                         >
-                          {size}
+                          {size.name}
                         </button>
                       ))}
                     </div>
@@ -394,10 +379,10 @@ export default function ShopPage() {
                       Select Brands
                     </h3>
                     <div className="grid grid-cols-3 gap-3">
-                      {BRANDS.map((brand) => (
+                      {brandsResponse?.data.brand.map((brand) => (
                         <button
                           key={brand.name}
-                          onClick={() => (brand.name)}
+                          onClick={() => brand.name}
                           className={`border-2 rounded-lg p-2 transition-all ${
                             selectedBrands.includes(brand.name)
                               ? "border-orange-400 bg-orange-50"
@@ -405,7 +390,7 @@ export default function ShopPage() {
                           }`}
                         >
                           <Image
-                            src={brand.logo}
+                            src={ "/images/brand-1.png"}
                             alt={brand.name}
                             width={60}
                             height={60}
@@ -469,7 +454,6 @@ export default function ShopPage() {
                               { key: "best-offer", label: "Best Offer" },
                               { key: "price-low", label: "Price Low" },
                               { key: "price-high", label: "Price High" },
-                              { key: "wishlist", label: "Wishlist" },
                             ].map((opt) => (
                               <button
                                 key={opt.key}
@@ -490,59 +474,57 @@ export default function ShopPage() {
                     {/* Additional Dropdowns */}
                     <div className="flex flex-wrap gap-3">
                       {/* Brand */}
-              <div className="relative w-full sm:w-32">
-  <button
-    onClick={() => toggleDropdown("brand")}
-    className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
-  >
-    <span>
-      {selectedBrands.length === 0
-        ? "Brand"
-        : brandsResponse?.data?.brand.find(
-            (b) => b.id === selectedBrands[0]
-          )?.name}
-    </span>
-    <ChevronDown className="w-4 h-4 text-gray-600" />
-  </button>
+                      <div className="relative w-full sm:w-32">
+                        <button
+                          onClick={() => toggleDropdown("brand")}
+                          className="w-full px-3 py-2 border border-[#DEEDE2] rounded-[4px] flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 text-sm text-gray-700"
+                        >
+                          <span>
+                            {selectedBrands.length === 0
+                              ? "Brand"
+                              : brandsResponse?.data?.brand.find(
+                                  (b) => b.id === selectedBrands[0]
+                                )?.name}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-gray-600" />
+                        </button>
 
-  {activeDropdown === "brand" && (
-    <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
-      
-      {/* All Brands */}
-      <button
-        onClick={() => {
-          setSelectedBrands([])
-          setActiveDropdown(null)
-        }}
-        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-      >
-        All Brands
-      </button>
+                        {activeDropdown === "brand" && (
+                          <div className="absolute top-full mt-1 w-full bg-white border border-[#DEEDE2] rounded-md shadow-lg z-10">
+                            {/* All Brands */}
+                            <button
+                              onClick={() => {
+                                setSelectedBrands([]);
+                                setActiveDropdown(null);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                            >
+                              All Brands
+                            </button>
 
-      {/* Brand list from API */}
-      {brandsResponse?.data?.brand.map((brand) => (
-        <button
-          key={brand.id}
-          onClick={() => {
-            setSelectedBrands([brand.id]) // single select for now
-            setActiveDropdown(null)
-          }}
-          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-        >
-          <Image
-            src={ "/images/brand-placeholder.png"}
-            alt={brand.name}
-            width={20}
-            height={20}
-            className="w-5 h-5 object-contain"
-          />
-          {brand.name}
-        </button>
-      ))}
-    </div>
-  )}
-</div>
-
+                            {/* Brand list from API */}
+                            {brandsResponse?.data?.brand.map((brand) => (
+                              <button
+                                key={brand.id}
+                                onClick={() => {
+                                  setSelectedBrands([brand.id]); // single select for now
+                                  setActiveDropdown(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <Image
+                                  src={"/images/brand-placeholder.png"}
+                                  alt={brand.name}
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 object-contain"
+                                />
+                                {brand.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
                       {/* Category */}
                       <div className="relative w-full sm:w-40">
@@ -600,16 +582,16 @@ export default function ShopPage() {
                             >
                               All Sizes
                             </button>
-                            {BOTTLE_SIZES.map((size) => (
+                            {sizeData?.data?.sizes.map((size) => (
                               <button
-                                key={size}
+                                key={size.id}
                                 onClick={() => {
-                                  toggleBottleSize(size);
+                                  toggleBottleSize(size.name);
                                   setActiveDropdown(null);
                                 }}
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
                               >
-                                {size}
+                                {size.name}
                               </button>
                             ))}
                           </div>
@@ -623,7 +605,7 @@ export default function ShopPage() {
 
             {/* Product Grid */}
             {paginatedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {productsData?.data?.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
