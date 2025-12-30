@@ -4,13 +4,18 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-
-import { useGetCartListQuery } from '@/redux/service/admin/cartApi';
+import { useGetCartListQuery } from "@/redux/service/admin/cartApi";
 import CartItemsList from "../Cart/CartItemsList";
+import {
+  CreateOrderRequest,
+  useCreateOrderMutation,
+} from "@/redux/service/admin/orderApi";
+import Swal from "sweetalert2";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const {  data: cartData, isLoading, refetch } = useGetCartListQuery();
+  const { data: cartData, isLoading, refetch } = useGetCartListQuery();
+  const [createOrder] = useCreateOrderMutation();
 
   const carts = cartData?.data?.carts || [];
   const summary = cartData?.data?.summary;
@@ -36,33 +41,51 @@ export default function CheckoutPage() {
   };
 
   // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    const newErrors: Record<string, string> = {};
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const firstName = (formData.get("firstName") || "").toString();
+    const lastName = (formData.get("lastName") || "").toString();
+    const email = (formData.get("email") || "").toString();
+    const phone = (formData.get("phone") || "").toString();
+    const address = (formData.get("address") || "").toString();
+
+    const payload: CreateOrderRequest = {
+      shippingDetails: {
+        name: `${firstName} ${lastName}`.trim(),
+        email,
+        phone,
+        address,
+      },
+      paymentMethod: "CARD",
+    };
+
+    try {
+      const res = await createOrder(payload).unwrap();
+
+      if (res.status) {
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: res.message || "Order created successfully.",
+          confirmButtonColor: "#AF6900",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: res.message || "Failed to create order.",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Create order failed:", error);
     }
-    if (!formData.phone.trim()) newErrors.phone = "Phone is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // ✅ Send order data to your backend
-    console.log("Order submitted:", {
-      customer: formData,
-      cartItems: carts,
-      summary: summary
-    });
-
-    alert("Order placed successfully!");
   };
 
   // ✅ Redirect if cart is empty
@@ -85,7 +108,9 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
-      <h1 className="text-xl sm:text-2xl font-bold text-[#482817] mb-6">Checkout</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#482817] mb-6">
+        Checkout
+      </h1>
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -105,7 +130,9 @@ export default function CheckoutPage() {
         <div className="lg:w-1/2 w-full">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="rounded-lg p-6">
-              <h2 className="text-xl font-extrabold text-[#0B0B0B] md:text-3xl font-abhaya mb-4">Fill info</h2>
+              <h2 className="text-xl font-extrabold text-[#0B0B0B] md:text-3xl font-abhaya mb-4">
+                Fill info
+              </h2>
 
               {/* Name Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -126,12 +153,14 @@ export default function CheckoutPage() {
                     placeholder="Your Name"
                   />
                   {errors.firstName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.firstName}
+                    </p>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
-                    Last Name 
+                    Last Name
                   </label>
                   <input
                     type="text"
@@ -146,7 +175,9 @@ export default function CheckoutPage() {
                     placeholder="Your Name"
                   />
                   {errors.lastName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.lastName}
+                    </p>
                   )}
                 </div>
               </div>
@@ -154,7 +185,7 @@ export default function CheckoutPage() {
               {/* Email Field */}
               <div className="mb-4">
                 <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
-                  Email 
+                  Email
                 </label>
                 <input
                   type="email"
@@ -176,7 +207,7 @@ export default function CheckoutPage() {
               {/* Phone Field */}
               <div className="mb-4">
                 <label className="block text-sm md:text-base font-normal text-[#1f1f1f] mb-1">
-                  Phone 
+                  Phone
                 </label>
                 <input
                   type="tel"
@@ -223,21 +254,29 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-[#1F1F1F]">Subtotal:</span>
-                    <span className="font-bold">${summary?.subtotal?.toFixed(2) || '0.00'}</span>
+                    <span className="font-bold">
+                      ${summary?.subtotal?.toFixed(2) || "0.00"}
+                    </span>
                   </div>
                   {summary && summary.totalDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount:</span>
-                      <span>-${summary?.totalDiscount?.toFixed(2) || '0.00'}</span>
+                      <span>
+                        -${summary?.totalDiscount?.toFixed(2) || "0.00"}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-[#1F1F1F]">Shipping:</span>
-                    <span className="font-bold">${summary?.totalShippingFee?.toFixed(2) || '0.00'}</span>
+                    <span className="font-bold">
+                      ${summary?.totalShippingFee?.toFixed(2) || "0.00"}
+                    </span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t">
                     <span>Total:</span>
-                    <span>${summary?.estimatedTotal?.toFixed(2) || '0.00'}</span>
+                    <span>
+                      ${summary?.estimatedTotal?.toFixed(2) || "0.00"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -253,6 +292,6 @@ export default function CheckoutPage() {
           </form>
         </div>
       </div>
-    </div> 
+    </div>
   );
 }

@@ -11,15 +11,19 @@ import "swiper/css/pagination";
 import ProductCard from "../cards/ProductCard";
 import { products } from "../cards/ProductsDummyData";
 import { useGetProductListQuery } from "@/redux/service/admin/productApi";
+import { Spin } from "antd";
+import Loaders from "@/lib/providers/Loaders";
 
 // Sample product data (replace with your actual API/data)
 
 export default function TrendingProductsSlider() {
-  const {data:productsData} = useGetProductListQuery({});
+  const {data:productsData, isLoading} = useGetProductListQuery({});
 
   console.log(productsData);
   
-
+if( isLoading) {
+  return <Loaders/>
+}
 
   return (
     <section className="py-10 px-4 sm:px-6 lg:px-8">

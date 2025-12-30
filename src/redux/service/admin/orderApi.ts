@@ -1,16 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import baseApi from "@/redux/api/baseApi";
 
-/* ================= GENERIC ================= */
+/* ================= GENERIC API RESPONSE ================= */
 
 export interface ApiResponse<T> {
+  success: boolean;
   status: boolean;
   message: string;
   data: T;
-  success: boolean;
 }
 
-/* ================= ORDER TYPES ================= */
+/* ================= ENUMS ================= */
+
+export type PaymentMethod = "CARD" | "CASH" | "ONLINE";
+export type PaymentStatus = "PENDING" | "CONFIRMED" | "FAILED";
+export type OrderStatus = "PENDING" | "COMPLETED" | "CANCELLED";
+
+/* ================= ORDER RELATED TYPES ================= */
 
 export interface OrderUser {
   id: string;
@@ -37,17 +43,21 @@ export interface OrderPayment {
   id: string;
   amount: number;
   paidAmount: number;
-  status: "PENDING" | "CONFIRMED" | "FAILED";
-  method: "CARD" | "CASH" | "ONLINE";
+  status: PaymentStatus;
+  method: PaymentMethod;
   createdAt: string;
 }
+
+/* ================= ORDER ================= */
 
 export interface Order {
   id: string;
   orderNo: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
-  paymentMethod: string;
+  status: OrderStatus;
+
+  paymentMethod: PaymentMethod;
   paymentStatus: "PENDING" | "CONFIRMED";
+
   amount: number;
   currency: string;
 
@@ -73,7 +83,7 @@ export interface Order {
   payments: OrderPayment[];
 }
 
-/* ================= LIST RESPONSE ================= */
+/* ================= LIST ORDERS RESPONSE ================= */
 
 export interface OrderListData {
   total: number;
@@ -87,44 +97,36 @@ export interface OrderListData {
 
 export type GetAllOrdersResponse = ApiResponse<OrderListData>;
 
-/* ================= CREATE ORDER TYPES ================= */
+/* ================= CREATE ORDER ================= */
 
 export interface CreateOrderShippingDetails {
   name: string;
   email: string;
   phone: string;
   address: string;
-  // Optional fields (you can add if needed)
-  city?: string;
-  state?: string;
-  country?: string;
-  zipCode?: string;
 }
 
 export interface CreateOrderRequest {
   shippingDetails: CreateOrderShippingDetails;
-  paymentMethod: "CARD" | "CASH" | "ONLINE";
+  paymentMethod: PaymentMethod;
 }
 
-export interface CreateOrderResponseData {
-  // Adjust based on your actual response structure
-  order: Order;
-  // or whatever your backend returns
-}
+/**
+ * Backend returns created order inside `data`
+ */
+export type CreateOrderResponse = ApiResponse<Order>;
 
-export type CreateOrderResponse = ApiResponse<CreateOrderResponseData>;
-
-/* ================= API ================= */
+/* ================= API ENDPOINTS ================= */
 
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ GET all orders (ADMIN)
+    // 🔹 ADMIN: Get all orders
     getAllOrderByAdmin: builder.query<GetAllOrdersResponse, void>({
       query: () => "/order/allOrderAdmin",
       providesTags: ["order"],
     }),
 
-    // ✅ CREATE new order
+    // 🔹 CREATE ORDER
     createOrder: builder.mutation<CreateOrderResponse, CreateOrderRequest>({
       query: (body) => ({
         url: "/order/createOrder",
@@ -137,9 +139,9 @@ export const orderApi = baseApi.injectEndpoints({
   overrideExisting: true,
 });
 
-/* ================= HOOKS ================= */
+/* ================= HOOK EXPORTS ================= */
 
 export const {
   useGetAllOrderByAdminQuery,
-  useCreateOrderMutation, // ✅ Added missing hook
+  useCreateOrderMutation,
 } = orderApi;

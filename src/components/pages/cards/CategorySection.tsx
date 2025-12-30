@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 // import { products } from "./ProductsDummyData"
 import { useGetProductListQuery } from "@/redux/service/admin/productApi"
 import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi"
+import Loaders from "@/lib/providers/Loaders"
 
 // const categories = ["All", "Rosé Wines", "Sparkling", "Red Wines", "White Wines"]
 
@@ -17,7 +18,7 @@ export default function CategorYSection() {
   const [visibleCount, setVisibleCount] = useState(8)
 
 const router = useRouter()
-const { data: categoriesResponse} = useGetCategoryListQuery();
+const { data: categoriesResponse, isLoading} = useGetCategoryListQuery();
 const categories = categoriesResponse?.data?.category || []
 
 const categoryMap = categories.reduce((acc, cat) => {
@@ -52,7 +53,11 @@ const handleLoadMore = () => {
   }
 
   const hasMore = filteredProducts.length > 12
-
+  if(isLoading) {
+    return (
+   <Loaders/>
+    )
+  }
   return (
     <main className="min-h-screen max-w-7xl mx-auto py-12 md:py-24">
       {/* Header */}
