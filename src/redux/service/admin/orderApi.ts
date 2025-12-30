@@ -87,6 +87,33 @@ export interface OrderListData {
 
 export type GetAllOrdersResponse = ApiResponse<OrderListData>;
 
+/* ================= CREATE ORDER TYPES ================= */
+
+export interface CreateOrderShippingDetails {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  // Optional fields (you can add if needed)
+  city?: string;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+}
+
+export interface CreateOrderRequest {
+  shippingDetails: CreateOrderShippingDetails;
+  paymentMethod: "CARD" | "CASH" | "ONLINE";
+}
+
+export interface CreateOrderResponseData {
+  // Adjust based on your actual response structure
+  order: Order;
+  // or whatever your backend returns
+}
+
+export type CreateOrderResponse = ApiResponse<CreateOrderResponseData>;
+
 /* ================= API ================= */
 
 export const orderApi = baseApi.injectEndpoints({
@@ -96,6 +123,16 @@ export const orderApi = baseApi.injectEndpoints({
       query: () => "/order/allOrderAdmin",
       providesTags: ["order"],
     }),
+
+    // ✅ CREATE new order
+    createOrder: builder.mutation<CreateOrderResponse, CreateOrderRequest>({
+      query: (body) => ({
+        url: "/order/createOrder",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["order"],
+    }),
   }),
   overrideExisting: true,
 });
@@ -104,4 +141,5 @@ export const orderApi = baseApi.injectEndpoints({
 
 export const {
   useGetAllOrderByAdminQuery,
+  useCreateOrderMutation, // ✅ Added missing hook
 } = orderApi;

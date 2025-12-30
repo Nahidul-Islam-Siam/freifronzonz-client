@@ -1,18 +1,19 @@
 // app/checkout/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '@/redux/store';
-import { removeFromCart, updateQuantity } from '@/redux/slices/cartSlice';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import Link from "next/link";
+
+import { useGetCartListQuery } from '@/redux/service/admin/cartApi';
 import CartItemsList from "../Cart/CartItemsList";
 
 export default function CheckoutPage() {
-  // ✅ Get cart data from Redux store
-  const { items, total } = useSelector((state: RootState) => state.cart);
-  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const {  data: cartData, isLoading, refetch } = useGetCartListQuery();
+
+  const carts = cartData?.data?.carts || [];
+  const summary = cartData?.data?.summary;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -24,16 +25,6 @@ export default function CheckoutPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // ✅ Cart management functions
-  const handleUpdateQuantity = (id: string, quantity: number) => {
-    if (quantity < 1) return;
-    dispatch(updateQuantity({ id, quantity }));
-  };
-
-  const handleRemoveItem = (id: string) => {
-    dispatch(removeFromCart(id));
-  };
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,31 +55,30 @@ export default function CheckoutPage() {
       return;
     }
 
-    // ✅ In a real app, you'd send this to your backend along with cart items
+    // ✅ Send order data to your backend
     console.log("Order submitted:", {
       customer: formData,
-      cartItems: items,
-      total: total
+      cartItems: carts,
+      summary: summary
     });
 
     alert("Order placed successfully!");
-    
-    // ✅ Optional: Clear cart after successful order
-    // dispatch(clearCart());
   };
 
   // ✅ Redirect if cart is empty
-  if (items.length === 0) {
+  useEffect(() => {
+    if (!isLoading && carts.length === 0) {
+      router.push("/cart");
+    }
+  }, [carts.length, isLoading, router]);
+
+  // ✅ Loading state
+  if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-        <p className="text-gray-500 mb-6">Add some items to your cart before checking out.</p>
-        <Link 
-          href="/shop" 
-          className="bg-[#AF6900] text-white px-6 py-3 rounded-md hover:bg-[#9E845C] transition-colors"
-        >
-          Continue Shopping
-        </Link>
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading checkout...</p>
+        </div>
       </div>
     );
   }
@@ -102,9 +92,8 @@ export default function CheckoutPage() {
         {/* Left: Cart Items (50%) */}
         <div className="lg:w-1/2 w-full">
           <CartItemsList
-            items={items}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
+            carts={carts}
+            refetchCart={refetch}
             showSummary={true}
           />
         </div>
@@ -234,15 +223,21 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-[#1F1F1F]">Subtotal:</span>
-                    <span className="font-bold">${total.toFixed(2)}</span>
+                    <span className="font-bold">${summary?.subtotal?.toFixed(2) || '0.00'}</span>
                   </div>
+                  {summary && summary.totalDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount:</span>
+                      <span>-${summary?.totalDiscount?.toFixed(2) || '0.00'}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-[#1F1F1F]">Shipping:</span>
-                    <span className="font-bold">$0.00</span>
+                    <span className="font-bold">${summary?.totalShippingFee?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t">
                     <span>Total:</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>${summary?.estimatedTotal?.toFixed(2) || '0.00'}</span>
                   </div>
                 </div>
               </div>
@@ -258,6 +253,6 @@ export default function CheckoutPage() {
           </form>
         </div>
       </div>
-    </div>
+    </div> 
   );
 }

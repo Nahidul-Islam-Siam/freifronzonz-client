@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // components/CartItemsList.tsx
 'use client';
+
 
 import Image from "next/image";
 import Link from "next/link";
@@ -13,18 +13,19 @@ import {
 } from '@/redux/service/admin/cartApi';
 
 interface CartItemsListProps {
-  carts: any[]; // API cart item objects
+  carts: any[];
   refetchCart: () => void;
+  showSummary?: boolean;
 }
 
 export default function CartItemsList({
   carts,
   refetchCart,
+  showSummary = false,
 }: CartItemsListProps) {
   const [updateCartItem] = useUpdateCartItemMutation();
   const [removeCartItem] = useRemoveCartItemMutation();
 
-  // Handle quantity update with API
   const handleUpdateQuantity = async (
     cartItemId: string,
     productId: string,
@@ -45,7 +46,7 @@ export default function CartItemsList({
       }).unwrap();
       
       if (res.status === true) {
-        await refetchCart();
+        refetchCart();
       } else {
         Swal.fire({
           icon: "error",
@@ -54,7 +55,7 @@ export default function CartItemsList({
           confirmButtonColor: "#d33",
         });
       }
-    } catch (error) {
+    } catch {
       Swal.fire({
         icon: "error",
         title: "Update Failed",
@@ -64,12 +65,11 @@ export default function CartItemsList({
     }
   };
 
-  // Handle item removal with API
   const handleRemoveItem = async (cartItemId: string) => {
     try {
       const res = await removeCartItem(cartItemId).unwrap();
       if (res.status === true) {
-        await refetchCart();
+        refetchCart();
       } else {
         Swal.fire({
           icon: "error",
@@ -78,7 +78,7 @@ export default function CartItemsList({
           confirmButtonColor: "#d33",
         });
       }
-    } catch (error) {
+    } catch {
       Swal.fire({
         icon: "error",
         title: "Removal Failed",
@@ -88,11 +88,19 @@ export default function CartItemsList({
     }
   };
 
-  // This will never render due to redirect, but added for safety
   if (carts.length === 0) {
-    return null;
+    return (
+      <div className="bg-white rounded-lg text-center border border-[#000000] p-6">
+        <p className="text-gray-500">Your cart is empty.</p>
+      </div>
+    );
   }
 
+  // Calculate total from carts if needed
+  // const total = carts.reduce(
+  //   (sum, cartItem) => sum + cartItem.priceInfo.itemTotal,
+  //   0
+  // );
 
   return (
     <div className="space-y-6">
@@ -174,6 +182,15 @@ export default function CartItemsList({
           </div>
         );
       })}
+
+      {showSummary && (
+        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+          <span className="font-bold text-lg md:text-xl text-[#1F1F1F]">Total:</span>
+          <span className="font-extrabold text-2xl md:text-3xl font-abhaya text-[#1F1F1F]">
+            ${(carts.reduce((sum, item) => sum + item.priceInfo.itemTotal, 0)).toFixed(2)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
