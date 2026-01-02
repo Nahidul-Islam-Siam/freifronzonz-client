@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/checkout/page.tsx
 "use client";
 
@@ -41,52 +42,73 @@ export default function CheckoutPage() {
   };
 
   // Handle form submit
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+  const form = e.currentTarget;
+  const formData = new FormData(form);
 
-    const firstName = (formData.get("firstName") || "").toString();
-    const lastName = (formData.get("lastName") || "").toString();
-    const email = (formData.get("email") || "").toString();
-    const phone = (formData.get("phone") || "").toString();
-    const address = (formData.get("address") || "").toString();
+  const firstName = (formData.get("firstName") || "").toString();
+  const lastName = (formData.get("lastName") || "").toString();
+  const email = (formData.get("email") || "").toString();
+  const phone = (formData.get("phone") || "").toString();
+  const address = (formData.get("address") || "").toString();
 
-    const payload: CreateOrderRequest = {
-      shippingDetails: {
-        name: `${firstName} ${lastName}`.trim(),
-        email,
-        phone,
-        address,
-      },
-      paymentMethod: "CARD",
-    };
+  // Basic validation
+  if (!firstName.trim()) {
+    setErrors({ ...errors, firstName: "First name is required" });
+    return;
+  }
+  if (!address.trim()) {
+    setErrors({ ...errors, address: "Address is required" });
+    return;
+  }
 
-    try {
-      const res = await createOrder(payload).unwrap();
-
-      if (res.status) {
-        Swal.fire({
-          icon: "success",
-          title: "Success!",
-          text: res.message || "Order created successfully.",
-          confirmButtonColor: "#AF6900",
-          timer: 1500,
-          showConfirmButton: false,
-        });
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: res.message || "Failed to create order.",
-          confirmButtonColor: "#d33",
-        });
-      }
-    } catch (error) {
-      console.error("Create order failed:", error);
-    }
+  const payload: CreateOrderRequest = {
+    shippingDetails: {
+      name: `${firstName} ${lastName}`.trim(),
+      email,
+      phone,
+      address,
+    },
+    paymentMethod: "CARD",
   };
+
+  try {
+    const res = await createOrder(payload).unwrap();
+
+    if (res.status && res.data?.payment?.url) {
+      // ✅ SUCCESS: Redirect to Stripe Checkout
+      Swal.fire({
+        icon: "success",
+        title: "Redirecting to payment...",
+        text: "Please complete your payment on Stripe.",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      }).then(() => {
+   window.open(res.data.payment.url, '_blank');
+
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Order Failed",
+        text: res.message || "Failed to create order.",
+        confirmButtonColor: "#d33",
+      });
+    }
+  } catch (error: any) {
+    console.error("Create order failed:", error);
+    const errorMsg = error?.data?.message || error?.message || "An unexpected error occurred";
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: errorMsg,
+      confirmButtonColor: "#d33",
+    });
+  }
+};
 
   // ✅ Redirect if cart is empty
   useEffect(() => {

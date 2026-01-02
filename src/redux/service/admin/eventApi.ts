@@ -28,7 +28,7 @@ export interface EventListData {
   hasNext: boolean;
   hasPrev: boolean;
   products: Event[];
-}
+} 
 
 export type GetEventListResponse = ApiResponse<EventListData>;
 export type CreateEventResponse = ApiResponse<Event>;

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState} from "react";
-import { message } from "antd";
+import { useState } from "react";
+import { message, Spin } from "antd";
 import CategoryTable from "./CategoryTable";
 import { 
   useGetCategoryListQuery, 
@@ -13,6 +13,7 @@ import Swal from "sweetalert2";
 export default function CategoryManagement() {
   const [categoryName, setCategoryName] = useState("");
   const [categoryDes, setCategoryDes] = useState(""); // ✅ description field
+  const [isAdding, setIsAdding] = useState(false); // ✅ loading state for button
 
   // ✅ Use real data from API
   const { data: categoriesResponse, isLoading, isError, refetch } = useGetCategoryListQuery();
@@ -31,6 +32,8 @@ export default function CategoryManagement() {
       return;
     }
 
+    setIsAdding(true); // ✅ Start loading
+
     // ✅ Build FormData with ONLY allowed fields
     const formData = new FormData();
     formData.append("name", categoryName.trim());
@@ -40,7 +43,7 @@ export default function CategoryManagement() {
       const res = await createCategory(formData).unwrap();
       
       if (res.status) {
- Swal.fire({
+        Swal.fire({
           icon: "success",
           title: "Added!",
           text: res.message || "Category has been added successfully.",
@@ -59,6 +62,8 @@ export default function CategoryManagement() {
     } catch (error: any) {
       const errorMsg = error?.data?.message || error?.message || "An error occurred while adding the category.";
       message.error(errorMsg);
+    } finally {
+      setIsAdding(false); // ✅ Stop loading (even on error)
     }
   };
 
@@ -106,6 +111,7 @@ export default function CategoryManagement() {
                 onChange={(e) => setCategoryName(e.target.value)}
                 className="w-full p-2 border rounded-md font-roboto border-[#D9D9D9] bg-white"
                 placeholder="Enter category name"
+                disabled={isAdding} // ✅ Disable input during loading
               />
             </div>
 
@@ -120,15 +126,24 @@ export default function CategoryManagement() {
                 className="w-full p-2 border rounded-md font-roboto border-[#D9D9D9] bg-white"
                 placeholder="Enter category description"
                 rows={3}
+                disabled={isAdding} // ✅ Disable input during loading
               />
             </div>
 
-            {/* ✅ Add Button */}
+            {/* ✅ Add Button with Loader */}
             <button
-              className="w-full mt-2 bg-[#AF6900] text-white py-4 rounded-md font-roboto"
+              className="w-full mt-2 bg-[#AF6900] text-white py-4 rounded-md font-roboto flex items-center justify-center"
               onClick={handleAddCategory}
+              disabled={isAdding} // ✅ Disable button during loading
             >
-              Add Category
+              {isAdding ? (
+                <>
+                  <Spin size="small" className="mr-2" />
+                  Adding...
+                </>
+              ) : (
+                "Add Category"
+              )}
             </button>
           </div>
         </div>

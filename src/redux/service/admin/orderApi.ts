@@ -51,7 +51,7 @@ export interface OrderPayment {
 /* ================= ORDER ================= */
 
 export interface Order {
-  id: string;
+  id:  string;
   orderNo: string;
   status: OrderStatus;
 
@@ -111,10 +111,28 @@ export interface CreateOrderRequest {
   paymentMethod: PaymentMethod;
 }
 
-/**
- * Backend returns created order inside `data`
- */
-export type CreateOrderResponse = ApiResponse<Order>;
+/* ✅ UPDATED: Create Order Response based on actual API */
+export interface CartSummary {
+  subtotal: number;
+  totalDiscount: number;
+  totalItems: number;
+  totalQuantity: number;
+  totalShippingFee: number;
+  estimatedTotal: number;
+}
+
+export interface PaymentInfo {
+  type: "stripe";
+  sessionId: string;
+  url: string;
+}
+
+export interface CreateOrderData {
+  cartSummary: CartSummary;
+  payment: PaymentInfo;
+}
+
+export type CreateOrderResponse = ApiResponse<CreateOrderData>;
 
 /* ================= API ENDPOINTS ================= */
 

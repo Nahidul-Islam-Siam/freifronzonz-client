@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Swal from 'sweetalert2';
+import { Spin } from 'antd';
 
 import BottleSizeTable from './BottleSize';
 import { useCreateSizeMutation, useGetSizeListQuery } from '@/redux/service/admin/bottleSizeApi';
@@ -10,12 +11,13 @@ import { useCreateSizeMutation, useGetSizeListQuery } from '@/redux/service/admi
 export default function BottleManagement() {
   const [bottleSizes, setBottleSizes] = useState<{ id: string; name: string }[]>([]);
   const [sizeName, setSizeName] = useState('');
+  const [isAdding, setIsAdding] = useState(false); // ✅ Loading state
 
   const { data: sizeData } = useGetSizeListQuery();
-const [createSize] = useCreateSizeMutation();
+  const [createSize] = useCreateSizeMutation();
   
 
-  const handleAdd = async ( ) => {
+  const handleAdd = async () => {
     if (!sizeName.trim()) {
       Swal.fire({
         icon: 'error',
@@ -25,6 +27,8 @@ const [createSize] = useCreateSizeMutation();
       });
       return;
     }
+
+    setIsAdding(true); // ✅ Start loading
 
     try {
       const res = await createSize({ name: sizeName.trim() }).unwrap();
@@ -37,6 +41,14 @@ const [createSize] = useCreateSizeMutation();
           timer: 1500,
           showConfirmButton: false,
         });
+        
+        // ✅ Only add to local state on success
+        const newBottle = {
+          id: res.data?.id || Date.now().toString(), // Use real ID if available
+          name: sizeName.trim(),
+        };
+        setBottleSizes([...bottleSizes, newBottle]);
+        setSizeName('');
       } else {
         Swal.fire({
           icon: 'error',
@@ -45,17 +57,17 @@ const [createSize] = useCreateSizeMutation();
           confirmButtonColor: '#d33',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add size:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error?.data?.message || 'An error occurred while adding the bottle size.',
+        confirmButtonColor: '#d33',
+      });
+    } finally {
+      setIsAdding(false); // ✅ Stop loading (success or error)
     }
-
-    const newBottle = {
-      id: Date.now().toString(),
-      name: sizeName.trim(),
-    };
-
-    setBottleSizes([...bottleSizes, newBottle]);
-    setSizeName('');
   };
 
   const handleDelete = (id: string) => {
@@ -94,14 +106,23 @@ const [createSize] = useCreateSizeMutation();
                 onChange={(e) => setSizeName(e.target.value)}
                 className="w-full p-2 border rounded-md font-roboto border-gray-300"
                 placeholder="e.g. 500ml, 1L"
+                disabled={isAdding} // ✅ Disable during loading
               />
             </div>
 
             <button
-              className="w-full mt-2 bg-[#AF6900] text-white py-3 rounded-md font-roboto"
+              className="w-full mt-2 bg-[#AF6900] text-white py-3 rounded-md font-roboto flex items-center justify-center"
               onClick={handleAdd}
+              disabled={isAdding} // ✅ Disable button during loading
             >
-              Add Bottle Size
+              {isAdding ? (
+                <>
+                  <Spin size="small" className="mr-2" />
+                  Adding...
+                </>
+              ) : (
+                "Add Bottle Size"
+              )}
             </button>
           </div>
         </div>

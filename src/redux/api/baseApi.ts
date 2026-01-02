@@ -9,7 +9,8 @@ import { RootState } from "../store";
 import { logout, setAccessToken } from "../features/auth";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "https://freifronzonz-server-1.onrender.com/api/v1",
+  // baseUrl: "https://freifronzonz-server-1.onrender.com/api/v1",
+    baseUrl: "http://localhost:4200/api/v1",
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth?.accessToken;
     if (token) {
@@ -66,7 +67,9 @@ export const baseApi = createApi({
     "size",
     "event",
     "payment",
-    "cart"
+    "cart",
+    "users",
+    
   ],
   endpoints: () => ({}),
 });

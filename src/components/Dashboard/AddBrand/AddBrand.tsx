@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, message } from "antd";
+import { Upload, message, Spin } from "antd";
 import Image from "next/image";
 import BrandTable from "./BrandTable";
 import {
@@ -69,7 +69,7 @@ export default function BrandManagement() {
       if (res?.status === true) {
         Swal.fire({
           icon: "success",
-          title: `${res.message} || Brand added successfully!`,
+          title: res.message || "Brand added successfully!",
           showConfirmButton: false,
           timer: 1500,
         });
@@ -165,6 +165,7 @@ export default function BrandManagement() {
                 onChange={(e) => setBrandName(e.target.value)}
                 className="w-full p-2 border rounded-md font-roboto border-[#D9D9D9] bg-white"
                 placeholder="Enter brand name"
+                disabled={isSubmitting}
               />
             </div>
 
@@ -181,6 +182,7 @@ export default function BrandManagement() {
                   accept=".png,.jpg,.jpeg"
                   onChange={handleFileChange}
                   showUploadList={false}
+                  disabled={isSubmitting}
                   className="border-dashed rounded-[14px] border border-[#D1D5DC] bg-white"
                 >
                   <div className="p-6 text-center justify-center flex flex-col items-center">
@@ -239,7 +241,8 @@ export default function BrandManagement() {
                     </div>
                     <button
                       onClick={handleRemoveLogo}
-                      className="text-red-500 hover:text-red-700 font-roboto text-sm"
+                      disabled={isSubmitting}
+                      className="text-red-500 hover:text-red-700 font-roboto text-sm disabled:opacity-50"
                     >
                       Delete
                     </button>
@@ -249,11 +252,18 @@ export default function BrandManagement() {
             </div>
 
             <button
-              className="w-full mt-2 bg-[#AF6900] text-white py-4 rounded-md font-roboto"
+              className="w-full mt-2 bg-[#AF6900] text-white py-4 rounded-md font-roboto flex items-center justify-center"
               onClick={handleAddBrand}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Adding..." : "Add"}
+              {isSubmitting ? (
+                <>
+                  <Spin size="small" className="mr-2" />
+                  Adding...
+                </>
+              ) : (
+                "Add"
+              )}
             </button>
           </div>
         </div>
