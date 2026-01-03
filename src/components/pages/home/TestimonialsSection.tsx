@@ -51,7 +51,7 @@ const testimonials = [
 export default function TestimonialsSection() {
   return (
     <section className="py-12 md:py-24 px-4 sm:px-6 lg:px-8 ">
-      <div className="max-w-7xl mx-auto grid grid-cols-1">
+      <div className="container mx-auto grid grid-cols-1">
       <h1 className="text-4xl font-extrabold font-abhaya text-center text-[#6D0E0B] md:text-[48px] mb-8">
       Our Happy Clients
         </h1>
