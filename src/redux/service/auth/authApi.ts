@@ -22,7 +22,7 @@ const authApi = baseApi.injectEndpoints({
         url: "/user",
         method: "GET",
       }),
-      providesTags: ["auth"],
+      providesTags: ["auth","users"],
     }),
 
     loginUser: builder.mutation<any, LoginRequest>({

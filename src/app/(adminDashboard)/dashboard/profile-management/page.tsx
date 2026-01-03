@@ -10,30 +10,30 @@ export default function ProfileManagement() {
   const [activeTab, setActiveTab] = useState<'hero' | 'story' | 'blog'>('hero');
   
   // Mock save handlers - replace with actual API calls
-  const handleSaveHero = (data: any) => {
-    console.log('Saving Hero Section:', data);
-    alert('Hero section saved!');
-  };
+  // const handleSaveHero = (data: any) => {
+  //   console.log('Saving Hero Section:', data);
+  //   alert('Hero section saved!');
+  // };
   
-  const handleSaveStory = (data: any) => {
-    console.log('Saving Our Story:', data);
-    alert('Our Story section saved!');
-  };
+  // const handleSaveStory = (data: any) => {
+  //   console.log('Saving Our Story:', data);
+  //   alert('Our Story section saved!');
+  // };
   
-  const handleAddBlog = (post: any) => {
-    console.log('Adding new blog post:', post);
-    alert('Blog post added!');
-  };
+  // const handleAddBlog = (post: any) => {
+  //   console.log('Adding new blog post:', post);
+  //   alert('Blog post added!');
+  // };
   
-  const handleEditBlog = (id: number, updatedPost: any) => {
-    console.log(`Editing blog ${id}:`, updatedPost);
-    alert(`Blog post ${id} edited!`);
-  };
+  // const handleEditBlog = (id: number, updatedPost: any) => {
+  //   console.log(`Editing blog ${id}:`, updatedPost);
+  //   alert(`Blog post ${id} edited!`);
+  // };
   
-  const handleDeleteBlog = (id: number) => {
-    console.log(`Deleting blog ${id}`);
-    alert(`Blog post ${id} deleted!`);
-  };
+  // const handleDeleteBlog = (id: number) => {
+  //   console.log(`Deleting blog ${id}`);
+  //   alert(`Blog post ${id} deleted!`);
+  // };
 
   return (
     <div className="min-h-screen py-8">
@@ -80,21 +80,21 @@ export default function ProfileManagement() {
         <div className=" p-6">
           {activeTab === 'hero' && (
             <HeroSection
-              onSave={handleSaveHero} 
+              // onSave={handleSaveHero} 
             />
           )}
           
           {activeTab === 'story' && (
             <OurStory 
-              onSave={handleSaveStory} 
+              // onSave={handleSaveStory} 
             />
           )}
           
           {activeTab === 'blog' && (
             <BlogManagement 
-              onAdd={handleAddBlog}
-              onEdit={handleEditBlog}
-              onDelete={handleDeleteBlog}
+              // onAdd={handleAddBlog}
+              // onEdit={handleEditBlog}
+              // onDelete={handleDeleteBlog}
             />
           )}
         </div>

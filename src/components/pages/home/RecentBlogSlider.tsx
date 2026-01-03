@@ -6,6 +6,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import BlogCard from '../cards/BlogCard';
+import { useGetBlogQuery } from '@/redux/service/admin/cmsApi';
 
 
 // Sample data — replace with real CMS or API later
@@ -53,6 +54,8 @@ export const blogPosts = [
 ];
 
 export default function RecentBlogSlider() {
+
+  const {data: blogPosts} = useGetBlogQuery();
   return (
     <section className="py-10 px-4 sm:px-6 lg:px-8 ">
       <div className="max-w-7xl mx-auto grid grid-cols-1">

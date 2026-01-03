@@ -14,7 +14,7 @@ import {
   CalendarClock, 
   Wallet, 
   Users, 
-  MessageCircle, 
+  // MessageCircle, 
   Settings, 
   LogOut,
   PlusCircle,     // for "Add Brand"
@@ -71,11 +71,11 @@ const navItems: MenuItem[] = [
     "/dashboard/user",
     <Users className="text-xl" />
   ),
-  getItem(
-    <Link href="/dashboard/contact-request">Contact Request</Link>,
-    "/dashboard/contact-request",
-    <MessageCircle className="text-xl" />
-  ),
+  // getItem(
+  //   <Link href="/dashboard/contact-request">Contact Request</Link>,
+  //   "/dashboard/contact-request",
+  //   <MessageCircle className="text-xl" />
+  // ),
   getItem(
     <Link href="/dashboard/profile-management">Profile Management</Link>,
     "/dashboard/profile-management",

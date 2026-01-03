@@ -69,7 +69,8 @@ export const baseApi = createApi({
     "payment",
     "cart",
     "users",
-    "cms"
+    "cms",
+    "stats"
     
   ],
   endpoints: () => ({}),

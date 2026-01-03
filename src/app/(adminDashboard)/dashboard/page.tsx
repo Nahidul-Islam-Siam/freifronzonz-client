@@ -1,6 +1,7 @@
 // app/page.tsx
 "use client";
 
+import RecentActivity from "@/components/Dashboard/RecentActivity";
 import RecentBookingsTable from "@/components/Dashboard/RecentBookingsTable";
 import RevenueChart from "@/components/Dashboard/RevenueChart";
 import StatCards from "@/components/Dashboard/StatCards";
@@ -17,10 +18,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Revenue Chart */}
-      <div className="mb-10">
-        <RevenueChart />
-      </div>
-
+<div className="mb-10 flex flex-col items-center md:flex-row w-full">
+  <div className="w-full md:w-7/10">
+    <RevenueChart />
+  </div>
+  <div className="w-full md:w-3/10">
+    <RecentActivity />
+  </div>
+</div>
       {/* Recent Bookings Table */}
       <div>
         <RecentBookingsTable

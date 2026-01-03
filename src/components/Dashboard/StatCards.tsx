@@ -1,378 +1,158 @@
-// components/dashboard/StatCards.tsx
+"use client";
+
+import { useGetStatsDataQuery } from "@/redux/service/admin/dashboardApi";
+import { useState, useMemo } from "react";
+
+type FilterType = "all" | "year" | "month" | "custom";
 
 export default function StatCards() {
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1); // 1-based
+
+  // Generate years (e.g., 2020–2030)
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 11 }, (_, i) => currentYear - 5 + i); // ±5 years
+  }, []);
+
+  const months = [
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
+  ];
+
+  // Build query params based on filter
+const queryParams =
+  filter === "year"
+    ? { year: new Date().getFullYear() }
+    : filter === "month"
+    ? { month: new Date().toISOString().slice(0, 7) }
+    : filter === "custom"
+    ? { month: `${selectedYear}-${selectedMonth.toString().padStart(2, "0")}` }
+    : undefined;
+  const { data, isLoading } = useGetStatsDataQuery(queryParams);
+
+  const stats = data?.data;
+
+  if (isLoading) {
+    return <p className="text-center py-10">Loading stats...</p>;
+  }
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 w-full mb-8 ">
-      {/* Total Earnings Card */}
-      <div className=" p-5 rounded-[8px] border-r-[1.5px] border-r-[#AF6900] bg-white shadow-sm min-w-[200px] flex flex-col justify-between">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xs md:text-base font-medium text-[#968F8F] uppercase">
-              Total Earnings
-            </h3>
-            <p className="md:text-2xl text-xl font-semibold font-poppins text-[#482817]">
-              $559,250
-            </p>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
+    <div className="w-full mb-8">
+      {/* HEADER + FILTER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <h2 className="text-lg font-semibold">Dashboard Stats</h2>
+
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {/* Main Filter */}
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as FilterType)}
+            className="border rounded-md px-3 py-1 text-sm"
           >
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M8.45488 5.60777L14 4L12.6198 9.6061L10.898 7.9532L8.12069 10.8463C8.02641 10.9445 7.89615 11 7.76 11C7.62385 11 7.49359 10.9445 7.39931 10.8463L5.36 8.72199L2.36069 11.8463C2.16946 12.0455 1.85294 12.0519 1.65373 11.8607C1.45453 11.6695 1.44807 11.3529 1.63931 11.1537L4.99931 7.65373C5.09359 7.55552 5.22385 7.5 5.36 7.5C5.49615 7.5 5.62641 7.55552 5.72069 7.65373L7.76 9.77801L10.1766 7.26067L8.45488 5.60777Z"
-              fill="#9E845C"
-            />
-          </svg>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="bg-[#AF6900] flex items-center gap-1 text-white text-xs px-2 py-1 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
+            <option value="all">All Time</option>
+            <option value="year">This Year</option>
+            <option value="month">This Month</option>
+            <option value="custom">Custom</option>
+          </select>
+
+          {/* Year Picker (only when custom) */}
+          {filter === "custom" && (
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="border rounded-md px-3 py-1 text-sm"
             >
-              <path
-                d="M9.33341 6.22201L7.00008 3.88867M7.00008 3.88867L4.66675 6.222M7.00008 3.88867L7.00008 10.1109"
-                stroke="white"
-              />
-            </svg>{" "}
-            +1.23%
-          </span>
-          <div className="bg-orange-500 rounded-full w-8 h-8 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="50"
-              height="50"
-              viewBox="0 0 50 50"
-              fill="none"
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Month Picker (only when custom) */}
+          {filter === "custom" && (
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="border rounded-md px-3 py-1 text-sm"
             >
-              <circle cx="25" cy="25" r="25" fill="#F4F7FD" />
-              <path
-                d="M26.3999 30.4201H23.8899C22.2499 30.4201 20.9199 29.0401 20.9199 27.3401C20.9199 26.9301 21.2599 26.5901 21.6699 26.5901C22.0799 26.5901 22.4199 26.9301 22.4199 27.3401C22.4199 28.2101 23.0799 28.9201 23.8899 28.9201H26.3999C27.0499 28.9201 27.5899 28.3401 27.5899 27.6401C27.5899 26.7701 27.2799 26.6001 26.7699 26.4201L22.7399 25.0001C21.9599 24.7301 20.9099 24.1501 20.9099 22.3601C20.9099 20.8201 22.1199 19.5801 23.5999 19.5801H26.1099C27.7499 19.5801 29.0799 20.9601 29.0799 22.6601C29.0799 23.0701 28.7399 23.4101 28.3299 23.4101C27.9199 23.4101 27.5799 23.0701 27.5799 22.6601C27.5799 21.7901 26.9199 21.0801 26.1099 21.0801H23.5999C22.9499 21.0801 22.4099 21.6601 22.4099 22.3601C22.4099 23.2301 22.7199 23.4001 23.2299 23.5801L27.2599 25.0001C28.0399 25.2701 29.0899 25.8501 29.0899 27.6401C29.0799 29.1701 27.8799 30.4201 26.3999 30.4201Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M25 31.75C24.59 31.75 24.25 31.41 24.25 31V19C24.25 18.59 24.59 18.25 25 18.25C25.41 18.25 25.75 18.59 25.75 19V31C25.75 31.41 25.41 31.75 25 31.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M25 35.75C19.07 35.75 14.25 30.93 14.25 25C14.25 19.07 19.07 14.25 25 14.25C30.93 14.25 35.75 19.07 35.75 25C35.75 30.93 30.93 35.75 25 35.75ZM25 15.75C19.9 15.75 15.75 19.9 15.75 25C15.75 30.1 19.9 34.25 25 34.25C30.1 34.25 34.25 30.1 34.25 25C34.25 19.9 30.1 15.75 25 15.75Z"
-                fill="#AF6900"
-              />
-            </svg>
-          </div>
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
-      {/* Total Order Card */}
-      <div className=" p-5 rounded-[8px] border-r-[1.5px] border-r-[#AF6900] bg-white shadow-sm min-w-[200px] flex flex-col justify-between">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xs md:text-base font-medium text-[#968F8F] uppercase">
-              Total Order
-            </h3>
-            <p className="md:text-2xl text-xl font-semibold font-poppins text-[#482817]">
-              $559,250
-            </p>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M8.45488 5.60777L14 4L12.6198 9.6061L10.898 7.9532L8.12069 10.8463C8.02641 10.9445 7.89615 11 7.76 11C7.62385 11 7.49359 10.9445 7.39931 10.8463L5.36 8.72199L2.36069 11.8463C2.16946 12.0455 1.85294 12.0519 1.65373 11.8607C1.45453 11.6695 1.44807 11.3529 1.63931 11.1537L4.99931 7.65373C5.09359 7.55552 5.22385 7.5 5.36 7.5C5.49615 7.5 5.62641 7.55552 5.72069 7.65373L7.76 9.77801L10.1766 7.26067L8.45488 5.60777Z"
-              fill="#9E845C"
-            />
-          </svg>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="bg-[#AF6900] flex items-center gap-1 text-white text-xs px-2 py-1 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-            >
-              <path
-                d="M9.33341 6.22201L7.00008 3.88867M7.00008 3.88867L4.66675 6.222M7.00008 3.88867L7.00008 10.1109"
-                stroke="white"
-              />
-            </svg>{" "}
-            +1.23%
-          </span>
-          <div className="bg-orange-500 rounded-full w-8 h-8 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="50"
-              height="50"
-              viewBox="0 0 50 50"
-              fill="none"
-            >
-              <circle cx="25" cy="25" r="25" fill="#F4F7FD" />
-              <path
-                d="M25.9998 27.75H24.9998C24.5898 27.75 24.2498 27.41 24.2498 27C24.2498 26.59 24.5898 26.25 24.9998 26.25H25.9998C26.6898 26.25 27.2498 25.69 27.2498 25V15.75H18.9998C17.8198 15.75 16.7398 16.39 16.1598 17.42C15.9598 17.78 15.4998 17.91 15.1398 17.71C14.7798 17.51 14.6498 17.05 14.8498 16.69C15.6898 15.19 17.2798 14.25 18.9998 14.25H27.9998C28.4098 14.25 28.7498 14.59 28.7498 15V25C28.7498 26.52 27.5198 27.75 25.9998 27.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M32 33.75H31C30.59 33.75 30.25 33.41 30.25 33C30.25 32.31 29.69 31.75 29 31.75C28.31 31.75 27.75 32.31 27.75 33C27.75 33.41 27.41 33.75 27 33.75H23C22.59 33.75 22.25 33.41 22.25 33C22.25 32.31 21.69 31.75 21 31.75C20.31 31.75 19.75 32.31 19.75 33C19.75 33.41 19.41 33.75 19 33.75H18C15.93 33.75 14.25 32.07 14.25 30C14.25 29.59 14.59 29.25 15 29.25C15.41 29.25 15.75 29.59 15.75 30C15.75 31.24 16.76 32.25 18 32.25H18.35C18.68 31.1 19.74 30.25 21 30.25C22.26 30.25 23.32 31.1 23.65 32.25H26.36C26.69 31.1 27.75 30.25 29.01 30.25C30.27 30.25 31.33 31.1 31.66 32.25H32C33.24 32.25 34.25 31.24 34.25 30V27.75H32C31.04 27.75 30.25 26.96 30.25 26V23C30.25 22.04 31.03 21.25 32 21.25L30.93 19.38C30.71 18.99 30.29 18.75 29.84 18.75H28.75V25C28.75 26.52 27.52 27.75 26 27.75H25C24.59 27.75 24.25 27.41 24.25 27C24.25 26.59 24.59 26.25 25 26.25H26C26.69 26.25 27.25 25.69 27.25 25V18C27.25 17.59 27.59 17.25 28 17.25H29.84C30.83 17.25 31.74 17.78 32.23 18.64L33.94 21.63C34.07 21.86 34.07 22.15 33.94 22.38C33.81 22.61 33.56 22.75 33.29 22.75H32C31.86 22.75 31.75 22.86 31.75 23V26C31.75 26.14 31.86 26.25 32 26.25H35C35.41 26.25 35.75 26.59 35.75 27V30C35.75 32.07 34.07 33.75 32 33.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M21 35.75C19.48 35.75 18.25 34.52 18.25 33C18.25 31.48 19.48 30.25 21 30.25C22.52 30.25 23.75 31.48 23.75 33C23.75 34.52 22.52 35.75 21 35.75ZM21 31.75C20.31 31.75 19.75 32.31 19.75 33C19.75 33.69 20.31 34.25 21 34.25C21.69 34.25 22.25 33.69 22.25 33C22.25 32.31 21.69 31.75 21 31.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M29 35.75C27.48 35.75 26.25 34.52 26.25 33C26.25 31.48 27.48 30.25 29 30.25C30.52 30.25 31.75 31.48 31.75 33C31.75 34.52 30.52 35.75 29 35.75ZM29 31.75C28.31 31.75 27.75 32.31 27.75 33C27.75 33.69 28.31 34.25 29 34.25C29.69 34.25 30.25 33.69 30.25 33C30.25 32.31 29.69 31.75 29 31.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M35 27.75H32C31.04 27.75 30.25 26.96 30.25 26V23C30.25 22.04 31.04 21.25 32 21.25H33.29C33.56 21.25 33.81 21.39 33.94 21.63L35.65 24.63C35.71 24.74 35.75 24.87 35.75 25V27C35.75 27.41 35.41 27.75 35 27.75ZM32 22.75C31.86 22.75 31.75 22.86 31.75 23V26C31.75 26.14 31.86 26.25 32 26.25H34.25V25.2L32.85 22.75H32Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M21 21.75H15C14.59 21.75 14.25 21.41 14.25 21C14.25 20.59 14.59 20.25 15 20.25H21C21.41 20.25 21.75 20.59 21.75 21C21.75 21.41 21.41 21.75 21 21.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M19 24.75H15C14.59 24.75 14.25 24.41 14.25 24C14.25 23.59 14.59 23.25 15 23.25H19C19.41 23.25 19.75 23.59 19.75 24C19.75 24.41 19.41 24.75 19 24.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M17 27.75H15C14.59 27.75 14.25 27.41 14.25 27C14.25 26.59 14.59 26.25 15 26.25H17C17.41 26.25 17.75 26.59 17.75 27C17.75 27.41 17.41 27.75 17 27.75Z"
-                fill="#AF6900"
-              />
-            </svg>
-          </div>
+      {/* CARDS */}
+      <div className="flex flex-col md:flex-row gap-4 w-full">
+        <StatCard
+          title="Total Earnings"
+          value={stats?.totalEarnings.entireTotal}
+          change={stats?.totalEarnings.change}
+        />
+        <StatCard
+          title="Total Orders"
+          value={stats?.totalOrders.entireTotal}
+          change={stats?.totalOrders.change}
+        />
+        <StatCard
+          title="Total Customers"
+          value={stats?.totalCustomers.entireTotal}
+          change={stats?.totalCustomers.change}
+        />
+        <StatCard
+          title="Total Products"
+          value={stats?.totalProducts.entireTotal}
+          change={stats?.totalProducts.change}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ================= STAT CARD COMPONENT ================= */
+function StatCard({
+  title,
+  value,
+  change,
+}: {
+  title: string;
+  value?: string | number;
+  change?: number;
+}) {
+  return (
+    <div className="p-5 rounded-[8px] border-r-[1.5px] border-r-[#AF6900] bg-white shadow-sm min-w-[200px] flex flex-col justify-between">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="text-xs md:text-base font-medium text-[#968F8F] uppercase">
+            {title}
+          </h3>
+          <p className="md:text-2xl text-xl font-semibold font-poppins text-[#482817]">
+            {value ?? "--"}
+          </p>
         </div>
       </div>
 
-      {/* Total Customer Card */}
-      <div className=" p-5 rounded-[8px] border-r-[1.5px] border-r-[#AF6900] bg-white shadow-sm min-w-[200px] flex flex-col justify-between">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xs md:text-base font-medium text-[#968F8F] uppercase">
-              Total Customer
-            </h3>
-            <p className="md:text-2xl text-xl font-semibold font-poppins text-[#482817]">
-              $559,250
-            </p>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M8.45488 5.60777L14 4L12.6198 9.6061L10.898 7.9532L8.12069 10.8463C8.02641 10.9445 7.89615 11 7.76 11C7.62385 11 7.49359 10.9445 7.39931 10.8463L5.36 8.72199L2.36069 11.8463C2.16946 12.0455 1.85294 12.0519 1.65373 11.8607C1.45453 11.6695 1.44807 11.3529 1.63931 11.1537L4.99931 7.65373C5.09359 7.55552 5.22385 7.5 5.36 7.5C5.49615 7.5 5.62641 7.55552 5.72069 7.65373L7.76 9.77801L10.1766 7.26067L8.45488 5.60777Z"
-              fill="#9E845C"
-            />
-          </svg>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="bg-[#AF6900] flex items-center gap-1 text-white text-xs px-2 py-1 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-            >
-              <path
-                d="M9.33341 6.22201L7.00008 3.88867M7.00008 3.88867L4.66675 6.222M7.00008 3.88867L7.00008 10.1109"
-                stroke="white"
-              />
-            </svg>{" "}
-            +1.23%
-          </span>
-          <div className="bg-orange-500 rounded-full w-8 h-8 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="50"
-              height="50"
-              viewBox="0 0 50 50"
-              fill="none"
-            >
-              <circle cx="25" cy="25" r="25" fill="#F4F7FD" />
-              <path
-                d="M22.1596 24.62C22.1296 24.62 22.1096 24.62 22.0796 24.62C22.0296 24.61 21.9596 24.61 21.8996 24.62C18.9996 24.53 16.8096 22.25 16.8096 19.44C16.8096 16.58 19.1396 14.25 21.9996 14.25C24.8596 14.25 27.1896 16.58 27.1896 19.44C27.1796 22.25 24.9796 24.53 22.1896 24.62C22.1796 24.62 22.1696 24.62 22.1596 24.62ZM21.9996 15.75C19.9696 15.75 18.3096 17.41 18.3096 19.44C18.3096 21.44 19.8696 23.05 21.8596 23.12C21.9196 23.11 22.0496 23.11 22.1796 23.12C24.1396 23.03 25.6796 21.42 25.6896 19.44C25.6896 17.41 24.0296 15.75 21.9996 15.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M29.5396 24.75C29.5096 24.75 29.4796 24.75 29.4496 24.74C29.0396 24.78 28.6196 24.49 28.5796 24.08C28.5396 23.67 28.7896 23.3 29.1996 23.25C29.3196 23.24 29.4496 23.24 29.5596 23.24C31.0196 23.16 32.1596 21.96 32.1596 20.49C32.1596 18.97 30.9296 17.74 29.4096 17.74C28.9996 17.75 28.6596 17.41 28.6596 17C28.6596 16.59 28.9996 16.25 29.4096 16.25C31.7496 16.25 33.6596 18.16 33.6596 20.5C33.6596 22.8 31.8596 24.66 29.5696 24.75C29.5596 24.75 29.5496 24.75 29.5396 24.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M22.1696 35.55C20.2096 35.55 18.2396 35.05 16.7496 34.05C15.3596 33.13 14.5996 31.87 14.5996 30.5C14.5996 29.13 15.3596 27.86 16.7496 26.93C19.7496 24.94 24.6096 24.94 27.5896 26.93C28.9696 27.85 29.7396 29.11 29.7396 30.48C29.7396 31.85 28.9796 33.12 27.5896 34.05C26.0896 35.05 24.1296 35.55 22.1696 35.55ZM17.5796 28.19C16.6196 28.83 16.0996 29.65 16.0996 30.51C16.0996 31.36 16.6296 32.18 17.5796 32.81C20.0696 34.48 24.2696 34.48 26.7596 32.81C27.7196 32.17 28.2396 31.35 28.2396 30.49C28.2396 29.64 27.7096 28.82 26.7596 28.19C24.2696 26.53 20.0696 26.53 17.5796 28.19Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M31.3397 33.75C30.9897 33.75 30.6797 33.51 30.6097 33.15C30.5297 32.74 30.7897 32.35 31.1897 32.26C31.8197 32.13 32.3997 31.88 32.8497 31.53C33.4197 31.1 33.7297 30.56 33.7297 29.99C33.7297 29.42 33.4197 28.88 32.8597 28.46C32.4197 28.12 31.8697 27.88 31.2197 27.73C30.8197 27.64 30.5597 27.24 30.6497 26.83C30.7397 26.43 31.1397 26.17 31.5497 26.26C32.4097 26.45 33.1597 26.79 33.7697 27.26C34.6997 27.96 35.2297 28.95 35.2297 29.99C35.2297 31.03 34.6897 32.02 33.7597 32.73C33.1397 33.21 32.3597 33.56 31.4997 33.73C31.4397 33.75 31.3897 33.75 31.3397 33.75Z"
-                fill="#AF6900"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Total Product Card */}
-      <div className=" p-5 rounded-[8px] border-r-[1.5px] border-r-[#AF6900] bg-white shadow-sm min-w-[200px] flex flex-col justify-between">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xs md:text-base font-medium text-[#968F8F] uppercase">
-              Total Product
-            </h3>
-            <p className="md:text-2xl text-xl font-semibold font-poppins text-[#482817]">
-              $559,250
-            </p>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M8.45488 5.60777L14 4L12.6198 9.6061L10.898 7.9532L8.12069 10.8463C8.02641 10.9445 7.89615 11 7.76 11C7.62385 11 7.49359 10.9445 7.39931 10.8463L5.36 8.72199L2.36069 11.8463C2.16946 12.0455 1.85294 12.0519 1.65373 11.8607C1.45453 11.6695 1.44807 11.3529 1.63931 11.1537L4.99931 7.65373C5.09359 7.55552 5.22385 7.5 5.36 7.5C5.49615 7.5 5.62641 7.55552 5.72069 7.65373L7.76 9.77801L10.1766 7.26067L8.45488 5.60777Z"
-              fill="#9E845C"
-            />
-          </svg>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="bg-[#AF6900] flex items-center gap-1 text-white text-xs px-2 py-1 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-            >
-              <path
-                d="M9.33341 6.22201L7.00008 3.88867M7.00008 3.88867L4.66675 6.222M7.00008 3.88867L7.00008 10.1109"
-                stroke="white"
-              />
-            </svg>{" "}
-            +1.23%
-          </span>
-          <div className="bg-orange-500 rounded-full w-8 h-8 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="50"
-              height="50"
-              viewBox="0 0 50 50"
-              fill="none"
-            >
-              <circle cx="25" cy="25" r="25" fill="#F4F7FD" />
-              <path
-                d="M24.9998 26.2999C24.8698 26.2999 24.7398 26.2699 24.6198 26.1999L15.7899 21.0899C15.4299 20.8799 15.3098 20.4199 15.5198 20.0599C15.7298 19.6999 16.1798 19.5799 16.5498 19.7899L24.9998 24.6799L33.3998 19.8199C33.7598 19.6099 34.2198 19.7399 34.4298 20.0899C34.6398 20.4499 34.5098 20.9099 34.1598 21.1199L25.3899 26.1999C25.2599 26.2599 25.1298 26.2999 24.9998 26.2999Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M25 35.36C24.59 35.36 24.25 35.02 24.25 34.61V25.54C24.25 25.13 24.59 24.79 25 24.79C25.41 24.79 25.75 25.13 25.75 25.54V34.61C25.75 35.02 25.41 35.36 25 35.36Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M25.0001 35.75C24.1201 35.75 23.2501 35.56 22.5601 35.18L17.2201 32.21C15.7701 31.41 14.6401 29.48 14.6401 27.82V22.17C14.6401 20.51 15.7701 18.59 17.2201 17.78L22.5601 14.82C23.9301 14.06 26.0701 14.06 27.4401 14.82L32.7801 17.79C34.2301 18.59 35.3601 20.52 35.3601 22.18V27.83C35.3601 29.49 34.2301 31.41 32.7801 32.22L27.4401 35.18C26.7501 35.56 25.8801 35.75 25.0001 35.75ZM25.0001 15.75C24.3701 15.75 23.7501 15.88 23.2901 16.13L17.9501 19.1C16.9901 19.64 16.1401 21.07 16.1401 22.18V27.83C16.1401 28.93 16.9901 30.37 17.9501 30.91L23.2901 33.88C24.2001 34.39 25.8001 34.39 26.7101 33.88L32.0501 30.91C33.0101 30.37 33.8601 28.94 33.8601 27.83V22.18C33.8601 21.08 33.0101 19.64 32.0501 19.1L26.7101 16.13C26.2501 15.88 25.6301 15.75 25.0001 15.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M30.0002 26.9905C29.5902 26.9905 29.2502 26.6505 29.2502 26.2405V23.0206L20.1302 17.7606C19.7702 17.5506 19.6502 17.0905 19.8602 16.7405C20.0702 16.3805 20.5202 16.2605 20.8802 16.4705L30.3702 21.9506C30.6002 22.0806 30.7502 22.3305 30.7502 22.6005V26.2606C30.7502 26.6506 30.4102 26.9905 30.0002 26.9905Z"
-                fill="#AF6900"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Total Visitor Card */}
-      <div className=" p-5 rounded-[8px] border-r-[1.5px] border-r-[#AF6900] bg-white shadow-sm min-w-[200px] flex flex-col justify-between">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xs md:text-base font-medium text-[#968F8F] uppercase">
-              Total Visitor
-            </h3>
-            <p className="md:text-2xl text-xl font-semibold font-poppins text-[#482817]">
-              $559,250
-            </p>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M8.45488 5.60777L14 4L12.6198 9.6061L10.898 7.9532L8.12069 10.8463C8.02641 10.9445 7.89615 11 7.76 11C7.62385 11 7.49359 10.9445 7.39931 10.8463L5.36 8.72199L2.36069 11.8463C2.16946 12.0455 1.85294 12.0519 1.65373 11.8607C1.45453 11.6695 1.44807 11.3529 1.63931 11.1537L4.99931 7.65373C5.09359 7.55552 5.22385 7.5 5.36 7.5C5.49615 7.5 5.62641 7.55552 5.72069 7.65373L7.76 9.77801L10.1766 7.26067L8.45488 5.60777Z"
-              fill="#9E845C"
-            />
-          </svg>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="bg-[#AF6900] flex items-center gap-1 text-white text-xs px-2 py-1 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-            >
-              <path
-                d="M9.33341 6.22201L7.00008 3.88867M7.00008 3.88867L4.66675 6.222M7.00008 3.88867L7.00008 10.1109"
-                stroke="white"
-              />
-            </svg>{" "}
-            +1.23%
-          </span>
-          <div className="bg-orange-500 rounded-full w-8 h-8 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="50"
-              height="50"
-              viewBox="0 0 50 50"
-              fill="none"
-            >
-              <circle cx="25" cy="25" r="25" fill="#F4F7FD" />
-              <path
-                d="M24.9998 26.2999C24.8698 26.2999 24.7398 26.2699 24.6198 26.1999L15.7899 21.0899C15.4299 20.8799 15.3098 20.4199 15.5198 20.0599C15.7298 19.6999 16.1798 19.5799 16.5498 19.7899L24.9998 24.6799L33.3998 19.8199C33.7598 19.6099 34.2198 19.7399 34.4298 20.0899C34.6398 20.4499 34.5098 20.9099 34.1598 21.1199L25.3899 26.1999C25.2599 26.2599 25.1298 26.2999 24.9998 26.2999Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M25 35.36C24.59 35.36 24.25 35.02 24.25 34.61V25.54C24.25 25.13 24.59 24.79 25 24.79C25.41 24.79 25.75 25.13 25.75 25.54V34.61C25.75 35.02 25.41 35.36 25 35.36Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M25.0001 35.75C24.1201 35.75 23.2501 35.56 22.5601 35.18L17.2201 32.21C15.7701 31.41 14.6401 29.48 14.6401 27.82V22.17C14.6401 20.51 15.7701 18.59 17.2201 17.78L22.5601 14.82C23.9301 14.06 26.0701 14.06 27.4401 14.82L32.7801 17.79C34.2301 18.59 35.3601 20.52 35.3601 22.18V27.83C35.3601 29.49 34.2301 31.41 32.7801 32.22L27.4401 35.18C26.7501 35.56 25.8801 35.75 25.0001 35.75ZM25.0001 15.75C24.3701 15.75 23.7501 15.88 23.2901 16.13L17.9501 19.1C16.9901 19.64 16.1401 21.07 16.1401 22.18V27.83C16.1401 28.93 16.9901 30.37 17.9501 30.91L23.2901 33.88C24.2001 34.39 25.8001 34.39 26.7101 33.88L32.0501 30.91C33.0101 30.37 33.8601 28.94 33.8601 27.83V22.18C33.8601 21.08 33.0101 19.64 32.0501 19.1L26.7101 16.13C26.2501 15.88 25.6301 15.75 25.0001 15.75Z"
-                fill="#AF6900"
-              />
-              <path
-                d="M30.0002 26.9905C29.5902 26.9905 29.2502 26.6505 29.2502 26.2405V23.0206L20.1302 17.7606C19.7702 17.5506 19.6502 17.0905 19.8602 16.7405C20.0702 16.3805 20.5202 16.2605 20.8802 16.4705L30.3702 21.9506C30.6002 22.0806 30.7502 22.3305 30.7502 22.6005V26.2606C30.7502 26.6506 30.4102 26.9905 30.0002 26.9905Z"
-                fill="#AF6900"
-              />
-            </svg>
-          </div>
-        </div>
+      <div className="flex justify-between items-center">
+        <span className="bg-[#AF6900] flex items-center gap-1 text-white text-xs px-2 py-1 rounded-full">
+          {change ?? 0}%
+        </span>
       </div>
     </div>
   );

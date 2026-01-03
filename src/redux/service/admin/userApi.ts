@@ -4,13 +4,12 @@ import baseApi from "@/redux/api/baseApi";
 /* ================= GENERIC API RESPONSE ================= */
 
 export interface ApiResponse<T> {
-  success: boolean;
   status: boolean;
   message: string;
   data: T;
 }
 
-/* ================= USER RELATED TYPES ================= */
+/* ================= USER TYPES ================= */
 
 export interface User {
   id: string;
@@ -18,13 +17,11 @@ export interface User {
   email: string;
   phone: string | null;
   photo: string | null;
-  role: "ADMIN" | "CUSTOMER" | string; // Extend as needed
-  joinedDate: string; // ISO datetime
-  lastOrderDate: string | null; // ISO datetime or null
+  role: "ADMIN" | "CUSTOMER" | string;
+  joinedDate: string;
+  lastOrderDate: string | null;
   totalOrders: number;
 }
-
-/* ================= USER LIST RESPONSE ================= */
 
 export interface UserListData {
   total: number;
@@ -47,6 +44,17 @@ export const userApi = baseApi.injectEndpoints({
       query: () => "/user/userList",
       providesTags: ["users"],
     }),
+
+    // 🔹 Update user — expects FormData from frontend
+    updateUserData: builder.mutation<ApiResponse<User>, FormData>({
+      query: (formData) => ({
+        url: "/user",
+        method: "PUT",
+        body: formData,
+        // ✅ No headers — browser auto-sets Content-Type with boundary
+      }),
+      invalidatesTags: ["users"],
+    }),
   }),
   overrideExisting: true,
 });
@@ -55,4 +63,5 @@ export const userApi = baseApi.injectEndpoints({
 
 export const {
   useGetAllUsersListQuery,
+  useUpdateUserDataMutation,
 } = userApi;

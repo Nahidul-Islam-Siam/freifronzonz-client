@@ -6,11 +6,11 @@
 import { Card, Table, Dropdown, Button, Modal, Typography, Tag, Spin } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { useState, useMemo } from 'react';
-import { useGetAllOrderByAdminQuery } from '@/redux/service/admin/orderApi';
+import { useGetRecentBookingsQuery } from '@/redux/service/admin/orderApi';
 
 const { Text } = Typography;
 
-/** Interface for order data from API */
+/** Simplified interface matching /dashboard/recent-orders */
 interface OrderRecord {
   key: string;
   orderId: string;
@@ -24,45 +24,51 @@ interface OrderRecord {
 
 /** Props interface */
 interface RecentBookingsTableProps {
+  // Pagination props are kept for future use, but recent orders usually don't paginate
   currentPage: number;
   setCurrentPage: (page: number) => void;
 }
 
 export default function RecentBookingsTable({
-  currentPage,
-  setCurrentPage,
+  // currentPage,
+  // setCurrentPage,
 }: RecentBookingsTableProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const { data: orders, isLoading, isError } = useGetAllOrderByAdminQuery();
+  // ✅ Use recent bookings endpoint (lightweight)
+  const { data: recentOrders, isLoading, isError } = useGetRecentBookingsQuery();
 
-  // Transform API data to table format
+  // ✅ Transform recent API data to table format
   const tableData: OrderRecord[] = useMemo(() => {
-    if (!orders?.data?.orders) return [];
-    
-    return orders.data.orders.map((order: any) => ({
-      key: order.id,
-      orderId: order.orderNo,
-      customer: order.name,
-      product: order.orderProducts?.[0]?.product?.name || 'N/A',
-      orderDate: new Date(order.createdAt).toLocaleDateString('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        year: '2-digit',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).replace(/\//g, '/').replace(/,/, ' -'),
-      qty: order.orderProducts?.[0]?.quantity || 0,
-      totalAmount: order.amount,
-      status: order.status === 'COMPLETED' 
-        ? 'Complete' 
-        : order.status === 'CANCELLED' 
-        ? 'Cancelled' 
-        : 'Pending',
-    }));
-  }, [orders]);
+    if (!recentOrders?.data) return [];
+
+    return recentOrders.data.map((order: any) => {
+      const product = order.orderProducts?.[0]; // first product
+      return {
+        key: order.id,
+        orderId: order.id, // note: your recent API doesn't return `orderNo`, so use `id`
+        customer: order.user?.name || 'Anonymous',
+        product: product?.product?.name || 'N/A',
+        orderDate: new Date(order.createdAt).toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: '2-digit',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        }).replace(/,/, ' -'), // "01/02/26 - 11:18 AM"
+        qty: product?.quantity || 0,
+        totalAmount: order.amount,
+        status:
+          order.status === 'COMPLETED'
+            ? 'Complete'
+            : order.status === 'CANCELLED'
+              ? 'Cancelled'
+              : 'Pending',
+      };
+    });
+  }, [recentOrders]);
 
   const showDetails = (record: OrderRecord) => {
     setSelectedOrder(record);
@@ -80,7 +86,6 @@ export default function RecentBookingsTable({
     if (status === 'Complete') color = 'green';
     if (status === 'Cancelled') color = 'red';
     if (status === 'Pending') color = 'purple';
-
     return <Tag color={color}>{status}</Tag>;
   };
 
@@ -156,22 +161,9 @@ export default function RecentBookingsTable({
         <Dropdown
           menu={{
             items: [
-              {
-                key: '1',
-                label: 'View Details',
-                onClick: () => showDetails(record),
-              },
-              {
-                key: '2',
-                label: 'View Profile',
-                onClick: () => alert('View Profile clicked'),
-              },
-              {
-                key: '3',
-                label: 'Remove',
-                danger: true,
-                onClick: () => alert('Remove clicked'),
-              },
+              { key: '1', label: 'View Details', onClick: () => showDetails(record) },
+              // { key: '2', label: 'View Profile', onClick: () => alert('View Profile') },
+              // { key: '2', label: 'Remove', danger: true, onClick: () => alert('Remove') },
             ],
           }}
           placement="bottomRight"
@@ -182,51 +174,14 @@ export default function RecentBookingsTable({
     },
   ];
 
+  // ✅ Loading & Error States
   if (isLoading) {
     return (
       <Card
         className="custom-recent-order-card"
-        title={
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '18px',
-                color: '#A7997D',
-                fontWeight: '600',
-              }}
-            >
-              Recent Order
-            </span>
-            <a
-              href="#"
-              style={{
-                fontSize: '14px',
-                color: '#A7997D',
-                textDecoration: 'none',
-                fontWeight: '500',
-              }}
-            >
-              Show All Orders
-            </a>
-          </div>
-        }
-        style={{
-          borderRadius: '0',
-          border: 'none',
-          backgroundColor: 'transparent',
-          overflow: 'hidden',
-        }}
-        bodyStyle={{
-          padding: 0,
-          backgroundColor: 'transparent',
-        }}
+        title={<TitleWithLink />}
+        style={{ borderRadius: '0', border: 'none', backgroundColor: 'transparent', overflow: 'hidden' }}
+        bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <div className="flex justify-center items-center h-64">
           <Spin size="large" />
@@ -239,50 +194,12 @@ export default function RecentBookingsTable({
     return (
       <Card
         className="custom-recent-order-card"
-        title={
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '18px',
-                color: '#A7997D',
-                fontWeight: '600',
-              }}
-            >
-              Recent Order
-            </span>
-            <a
-              href="#"
-              style={{
-                fontSize: '14px',
-                color: '#A7997D',
-                textDecoration: 'none',
-                fontWeight: '500',
-              }}
-            >
-              Show All Orders
-            </a>
-          </div>
-        }
-        style={{
-          borderRadius: '0',
-          border: 'none',
-          backgroundColor: 'transparent',
-          overflow: 'hidden',
-        }}
-        bodyStyle={{
-          padding: 0,
-          backgroundColor: 'transparent',
-        }}
+        title={<TitleWithLink />}
+        style={{ borderRadius: '0', border: 'none', backgroundColor: 'transparent', overflow: 'hidden' }}
+        bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <div className="text-center text-red-500 py-12">
-          Failed to load orders. Please try again.
+          Failed to load recent orders.
         </div>
       </Card>
     );
@@ -292,77 +209,27 @@ export default function RecentBookingsTable({
     <>
       <Card
         className="custom-recent-order-card"
-        title={
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            {/* Left: Title */}
-            <span
-              style={{
-                fontSize: '18px',
-                color: '#A7997D',
-                fontWeight: '600',
-              }}
-            >
-              Recent Order
-            </span>
-            {/* Right: Show All Orders */}
-            <a
-              href="#"
-              style={{
-                fontSize: '14px',
-                color: '#A7997D',
-                textDecoration: 'none',
-                fontWeight: '500',
-              }}
-            >
-              Show All Orders
-            </a>
-          </div>
-        }
-        style={{
-          borderRadius: '0',
-          border: 'none',
-          backgroundColor: 'transparent',
-          overflow: 'hidden',
-        }}
-        bodyStyle={{
-          padding: 0,
-          backgroundColor: 'transparent',
-        }}
+        title={<TitleWithLink />}
+        style={{ borderRadius: '0', border: 'none', backgroundColor: 'transparent', overflow: 'hidden' }}
+        bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <div style={{ overflowX: 'auto', width: '100%' }}>
           <Table
             columns={columns}
             dataSource={tableData}
-            pagination={{
-              current: currentPage,
-              pageSize: 10,
-              total: tableData.length,
-              onChange: setCurrentPage,
-              showSizeChanger: false,
-              position: ['bottomRight'],
-              // hideOnSinglePage: true,
-            }}
+            pagination={false} // ✅ Recent orders usually don't need pagination
             scroll={{ x: 800 }}
             tableLayout="auto"
             bordered={false}
             style={{ marginTop: '20px' }}
-            locale={{ emptyText: 'No orders found' }}
+            locale={{ emptyText: 'No recent orders' }}
           />
         </div>
 
-        {/* --- Global Styles --- */}
         <style jsx global>{`
           .ant-table-tbody {
             background-color: #fff !important;
           }
-
           .custom-recent-order-card .ant-card-head {
             display: flex !important;
             justify-content: center !important;
@@ -374,14 +241,11 @@ export default function RecentBookingsTable({
             border-radius: 10px 10px 0 0 !important;
             padding: 0px 0px !important;
           }
-
           .custom-recent-order-card .ant-card-head-title {
             color: #a7997d !important;
             font-weight: 600 !important;
             font-size: 18px !important;
           }
-
-          /* Table Header */
           .custom-recent-order-card .ant-table-thead > tr > th {
             background-color: #f5f5f5 !important;
             color: #333 !important;
@@ -390,60 +254,16 @@ export default function RecentBookingsTable({
             padding: 12px 16px;
             font-size: 14px;
           }
-
-          .custom-recent-order-card .ant-table-thead > tr:first-child > th:first-child {
-            border-top-left-radius: 8px !important;
-          }
-
-          .custom-recent-order-card .ant-table-thead > tr:first-child > th:last-child {
-            border-top-right-radius: 8px !important;
-          }
-
-          /* Table Body Rows */
           .custom-recent-order-card .ant-table-tbody > tr {
             border-bottom: 1px solid #e5e7eb !important;
           }
-
           .custom-recent-order-card .ant-table-tbody > tr:hover {
             background-color: #fafafa !important;
-          }
-
-          /* Pagination Styling */
-          .custom-recent-order-card .ant-pagination-item-link,
-          .custom-recent-order-card .ant-pagination-item a {
-            color: black !important;
-            border-color: #a7997d !important;
-          }
-
-          .custom-recent-order-card .ant-pagination-item-active {
-            background-color: #a7997d !important;
-            border-color: #a7997d !important;
-          }
-
-          .custom-recent-order-card .ant-pagination-item-active a {
-            color: white !important;
-          }
-
-          .custom-recent-order-card .ant-pagination-item:hover a,
-          .custom-recent-order-card .ant-pagination-item-link:hover {
-            color: #5e5e5e !important;
-            border-color: #5e5e5e !important;
-          }
-
-          .custom-recent-order-card .ant-pagination-prev a,
-          .custom-recent-order-card .ant-pagination-next a {
-            color: black !important;
-          }
-
-          .custom-recent-order-card .ant-pagination-prev button:disabled,
-          .custom-recent-order-card .ant-pagination-next button:disabled {
-            border-color: #ddd !important;
-            color: #ccc !important;
           }
         `}</style>
       </Card>
 
-      {/* 💡 Modal: Order Details */}
+      {/* Modal: Order Details */}
       <Modal
         title="Order Details"
         open={isModalVisible}
@@ -454,41 +274,15 @@ export default function RecentBookingsTable({
       >
         {selectedOrder && (
           <div style={{ padding: '20px', lineHeight: '2.2' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Order ID</Text>
-              <Text>{selectedOrder.orderId}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Customer</Text>
-              <Text>{selectedOrder.customer}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Product</Text>
-              <Text>{selectedOrder.product}</Text>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Order Date</Text>
-              <Text>{selectedOrder.orderDate}</Text>
-            </div>
+            <DetailRow label="Order ID" value={selectedOrder.orderId} />
+            <DetailRow label="Customer" value={selectedOrder.customer} />
+            <DetailRow label="Product" value={selectedOrder.product} />
+            <DetailRow label="Order Date" value={selectedOrder.orderDate} />
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <Text strong>Qty</Text>
-              <span
-                style={{
-                  backgroundColor: '#A7997D',
-                  color: 'white',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                }}
-              >
-                {selectedOrder.qty}
-              </span>
+              {renderQty(selectedOrder.qty)}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text strong>Total Amount</Text>
-              <Text>${selectedOrder.totalAmount}</Text>
-            </div>
+            <DetailRow label="Total Amount" value={`$${selectedOrder.totalAmount}`} />
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <Text strong>Status</Text>
               {renderStatusTag(selectedOrder.status)}
@@ -499,3 +293,24 @@ export default function RecentBookingsTable({
     </>
   );
 }
+
+// ─── Reusable Components ─────────────────────────────────────
+
+const TitleWithLink = () => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+    <span style={{ fontSize: '18px', color: '#A7997D', fontWeight: '600' }}>Recent Order</span>
+    <a
+      href="/admin/orders"
+      style={{ fontSize: '14px', color: '#A7997D', textDecoration: 'none', fontWeight: '500' }}
+    >
+      Show All Orders
+    </a>
+  </div>
+);
+
+const DetailRow = ({ label, value }: { label: string; value: string }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <Text strong>{label}</Text>
+    <Text>{value}</Text>
+  </div>
+);

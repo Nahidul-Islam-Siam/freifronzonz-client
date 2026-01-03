@@ -7,9 +7,12 @@ import {
   FiMapPin as MapPinIcon,
 } from "react-icons/fi";
 import { useState } from "react";
+// import { useGetMeQuery } from "@/redux/service/auth/authApi";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
+
+  // const {data:getme} = useGetMeQuery();
 
   // Mock data for the form (in a real app, this would come from state or props)
   const [formData, setFormData] = useState({

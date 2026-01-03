@@ -4,8 +4,7 @@ import baseApi from "@/redux/api/baseApi";
 /* ================= GENERIC API RESPONSE ================= */
 
 export interface ApiResponse<T> {
-  success: boolean;
-  status: boolean;
+  status: boolean; // Note: your response has "status", not "success"
   message: string;
   data: T;
 }
@@ -13,11 +12,11 @@ export interface ApiResponse<T> {
 /* ================= ENUMS ================= */
 
 export type PaymentMethod = "CARD" | "CASH" | "ONLINE";
-export type PaymentStatus = "PENDING" | "CONFIRMED" | "FAILED";
 export type OrderStatus = "PENDING" | "COMPLETED" | "CANCELLED";
 
-/* ================= ORDER RELATED TYPES ================= */
+/* ================= FULL ORDER (for admin/detail views) ================= */
 
+// Keep your existing full Order interface for getAllOrderByAdmin
 export interface OrderUser {
   id: string;
   name: string;
@@ -43,47 +42,66 @@ export interface OrderPayment {
   id: string;
   amount: number;
   paidAmount: number;
-  status: PaymentStatus;
+  status: "PENDING" | "CONFIRMED" | "FAILED";
   method: PaymentMethod;
   createdAt: string;
 }
 
-/* ================= ORDER ================= */
-
 export interface Order {
-  id:  string;
+  id: string;
   orderNo: string;
   status: OrderStatus;
-
   paymentMethod: PaymentMethod;
   paymentStatus: "PENDING" | "CONFIRMED";
-
   amount: number;
   currency: string;
-
   name: string;
   email: string;
   phone: string;
   address: string;
-
   city: string | null;
   state: string | null;
   country: string | null;
   zipCode: string | null;
-
   shippingFee: number;
   trackingNumber: string | null;
   estimatedDelivery: string | null;
-
   createdAt: string;
   updatedAt: string;
-
   user: OrderUser;
   orderProducts: OrderProductItem[];
   payments: OrderPayment[];
 }
 
-/* ================= LIST ORDERS RESPONSE ================= */
+/* ================= RECENT ORDER (for dashboard) ================= */
+
+export interface RecentOrderUser {
+  id: string;
+  name: string;
+}
+
+export interface RecentOrderProduct {
+  id: string;
+  name: string;
+}
+
+export interface RecentOrderProductItem {
+  productId: string;
+  quantity: number;
+  price: number;
+  product: RecentOrderProduct;
+}
+
+export interface RecentOrder {
+  id: string;
+  createdAt: string; // ISO string
+  amount: number;
+  status: OrderStatus;
+  user: RecentOrderUser;
+  orderProducts: RecentOrderProductItem[];
+}
+
+/* ================= RESPONSE TYPES ================= */
 
 export interface OrderListData {
   total: number;
@@ -96,8 +114,9 @@ export interface OrderListData {
 }
 
 export type GetAllOrdersResponse = ApiResponse<OrderListData>;
+export type GetRecentOrdersResponse = ApiResponse<RecentOrder[]>;
 
-/* ================= CREATE ORDER ================= */
+/* ================= CREATE ORDER TYPES (unchanged) ================= */
 
 export interface CreateOrderShippingDetails {
   name: string;
@@ -111,7 +130,6 @@ export interface CreateOrderRequest {
   paymentMethod: PaymentMethod;
 }
 
-/* ✅ UPDATED: Create Order Response based on actual API */
 export interface CartSummary {
   subtotal: number;
   totalDiscount: number;
@@ -138,9 +156,15 @@ export type CreateOrderResponse = ApiResponse<CreateOrderData>;
 
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // 🔹 ADMIN: Get all orders
+    // 🔹 ADMIN: Full order list
     getAllOrderByAdmin: builder.query<GetAllOrdersResponse, void>({
       query: () => "/order/allOrderAdmin",
+      providesTags: ["order"],
+    }),
+
+    // 🔹 DASHBOARD: Recent orders (lightweight)
+    getRecentBookings: builder.query<GetRecentOrdersResponse, void>({
+      query: () => "/dashboard/recent-orders",
       providesTags: ["order"],
     }),
 
@@ -161,5 +185,6 @@ export const orderApi = baseApi.injectEndpoints({
 
 export const {
   useGetAllOrderByAdminQuery,
+  useGetRecentBookingsQuery, // ✅ Export the new hook
   useCreateOrderMutation,
 } = orderApi;
