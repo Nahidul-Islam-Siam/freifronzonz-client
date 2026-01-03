@@ -3,16 +3,17 @@
 
 'use client';
 
-import { Card, Table, Dropdown, Button, Modal, Typography, Tag } from 'antd';
+import { Card, Table, Dropdown, Button, Modal, Typography, Tag, Spin } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useGetAllOrderByAdminQuery } from '@/redux/service/admin/orderApi';
 
 const { Text } = Typography;
 
-/** Interface for order data */
+/** Interface for order data from API */
 interface OrderRecord {
-  key: number;
-  orderId: number;
+  key: string;
+  orderId: string;
   customer: string;
   product: string;
   orderDate: string;
@@ -27,24 +28,41 @@ interface RecentBookingsTableProps {
   setCurrentPage: (page: number) => void;
 }
 
-// Mock data generation
-const orderData: OrderRecord[] = Array.from({ length: 12 }, (_, i) => ({
-  key: i,
-  orderId: 12345,
-  customer: 'Alfa Adison Jonson',
-  product: 'Basket with handles',
-  orderDate: '12/12/25 - 6:00pm',
-  qty: 4,
-  totalAmount: 600,
-  status: ['Complete', 'Cancelled', 'Pending'][i % 3] as OrderRecord['status'],
-}));
-
 export default function RecentBookingsTable({
   currentPage,
   setCurrentPage,
 }: RecentBookingsTableProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const { data: orders, isLoading, isError } = useGetAllOrderByAdminQuery();
+
+  // Transform API data to table format
+  const tableData: OrderRecord[] = useMemo(() => {
+    if (!orders?.data?.orders) return [];
+    
+    return orders.data.orders.map((order: any) => ({
+      key: order.id,
+      orderId: order.orderNo,
+      customer: order.name,
+      product: order.orderProducts?.[0]?.product?.name || 'N/A',
+      orderDate: new Date(order.createdAt).toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).replace(/\//g, '/').replace(/,/, ' -'),
+      qty: order.orderProducts?.[0]?.quantity || 0,
+      totalAmount: order.amount,
+      status: order.status === 'COMPLETED' 
+        ? 'Complete' 
+        : order.status === 'CANCELLED' 
+        ? 'Cancelled' 
+        : 'Pending',
+    }));
+  }, [orders]);
 
   const showDetails = (record: OrderRecord) => {
     setSelectedOrder(record);
@@ -87,7 +105,8 @@ export default function RecentBookingsTable({
       title: 'Order ID',
       dataIndex: 'orderId',
       key: 'orderId',
-      width: 100,
+      width: 150,
+      ellipsis: true,
     },
     {
       title: 'Customer',
@@ -100,6 +119,7 @@ export default function RecentBookingsTable({
       dataIndex: 'product',
       key: 'product',
       width: 200,
+      ellipsis: true,
     },
     {
       title: 'Order Date',
@@ -162,6 +182,112 @@ export default function RecentBookingsTable({
     },
   ];
 
+  if (isLoading) {
+    return (
+      <Card
+        className="custom-recent-order-card"
+        title={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '18px',
+                color: '#A7997D',
+                fontWeight: '600',
+              }}
+            >
+              Recent Order
+            </span>
+            <a
+              href="#"
+              style={{
+                fontSize: '14px',
+                color: '#A7997D',
+                textDecoration: 'none',
+                fontWeight: '500',
+              }}
+            >
+              Show All Orders
+            </a>
+          </div>
+        }
+        style={{
+          borderRadius: '0',
+          border: 'none',
+          backgroundColor: 'transparent',
+          overflow: 'hidden',
+        }}
+        bodyStyle={{
+          padding: 0,
+          backgroundColor: 'transparent',
+        }}
+      >
+        <div className="flex justify-center items-center h-64">
+          <Spin size="large" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card
+        className="custom-recent-order-card"
+        title={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '18px',
+                color: '#A7997D',
+                fontWeight: '600',
+              }}
+            >
+              Recent Order
+            </span>
+            <a
+              href="#"
+              style={{
+                fontSize: '14px',
+                color: '#A7997D',
+                textDecoration: 'none',
+                fontWeight: '500',
+              }}
+            >
+              Show All Orders
+            </a>
+          </div>
+        }
+        style={{
+          borderRadius: '0',
+          border: 'none',
+          backgroundColor: 'transparent',
+          overflow: 'hidden',
+        }}
+        bodyStyle={{
+          padding: 0,
+          backgroundColor: 'transparent',
+        }}
+      >
+        <div className="text-center text-red-500 py-12">
+          Failed to load orders. Please try again.
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card
@@ -213,20 +339,21 @@ export default function RecentBookingsTable({
         <div style={{ overflowX: 'auto', width: '100%' }}>
           <Table
             columns={columns}
-            dataSource={orderData}
+            dataSource={tableData}
             pagination={{
               current: currentPage,
               pageSize: 10,
-              total: orderData.length,
+              total: tableData.length,
               onChange: setCurrentPage,
               showSizeChanger: false,
               position: ['bottomRight'],
-              hideOnSinglePage: true,
+              // hideOnSinglePage: true,
             }}
             scroll={{ x: 800 }}
             tableLayout="auto"
             bordered={false}
             style={{ marginTop: '20px' }}
+            locale={{ emptyText: 'No orders found' }}
           />
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Search, Menu, X, ShoppingCart, Heart, User } from "lucide-react";
+import { Search, Menu, X, ShoppingCart, User } from "lucide-react";
 import Image from "next/image";
 import logo from "@/assets/logo/logo.png";
 import { useSelector, useDispatch } from "react-redux";
@@ -19,29 +19,31 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const role = useSelector((state: RootState) => state?.auth.user?.role);
-// ✅ Add this line
-const {  data: cartData } = useGetCartListQuery();
+  // ✅ Add this line
+  const { data: cartData } = useGetCartListQuery();
 
-const cartCount = cartData?.data.summary.totalItems || 0;
+  const cartCount = cartData?.data.summary.totalItems || 0;
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-// Close dropdown when clicking outside
-useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-      setProfileMenuOpen(false);
-    }
-  };
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
     setProfileMenuOpen(false);
     router.push("/"); // Redirect to home after logout
-
   };
 
   const navItems = [
@@ -175,31 +177,33 @@ useEffect(() => {
             <div className="flex items-center gap-4 ml-auto lg:ml-6">
               <div className="flex items-center gap-2">
                 {/* Cart (always visible) */}
-    <Link href="/cart">
-  <button 
-    className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-    aria-label={`Shopping cart, ${cartCount} items`}
-  >
-    <ShoppingCart 
-      className={`w-5 h-5 ${cartCount > 0 ? 'text-amber-700' : 'text-gray-700'}`} 
-    />
-    {cartCount > 0 && (
-      <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-fadeIn">
-        {cartCount}
-      </span>
-    )}
-  </button>
-</Link>
+                <Link href="/cart">
+                  <button
+                    className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label={`Shopping cart, ${cartCount} items`}
+                  >
+                    <ShoppingCart
+                      className={`w-5 h-5 ${
+                        cartCount > 0 ? "text-amber-700" : "text-gray-700"
+                      }`}
+                    />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-fadeIn">
+                        {cartCount}
+                      </span>
+                    )}
+                  </button>
+                </Link>
 
                 {/* ✅ Auth UI with Dropdown */}
                 {accessToken ? (
                   <>
                     {/* Wishlist */}
-                    <Link href="/wishlist">
+                    {/* <Link href="/wishlist">
                       <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full">
                         <Heart className="w-5 h-5 text-gray-700" />
                       </button>
-                    </Link>
+                    </Link> */}
 
                     {/* Profile Dropdown Trigger */}
                     <div className="relative" ref={profileMenuRef}>
@@ -217,7 +221,9 @@ useEffect(() => {
                         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                           <div className="py-1">
                             <Link
-                              href={role === "ADMIN" ? "/dashboard" : "/profile"}
+                              href={
+                                role === "ADMIN" ? "/dashboard" : "/profile"
+                              }
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setProfileMenuOpen(false)}
                             >

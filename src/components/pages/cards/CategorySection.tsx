@@ -59,7 +59,8 @@ const handleLoadMore = () => {
     )
   }
   return (
-    <main className="min-h-screen max-w-7xl mx-auto py-12 md:py-24">
+<main className="min-h-[calc(100svh)] container mx-auto py-12 md:py-24">
+
       {/* Header */}
       <div className="py-12 px-4 sm:px-6 lg:px-8 mx-auto">
         <h1 className="text-4xl font-extrabold font-abhaya text-center text-[#6D0E0B] md:text-[48px] mb-8">
@@ -74,8 +75,8 @@ const handleLoadMore = () => {
       </div>
 
       {/* Products Grid */}
-      <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+      <div className="py-12 px-4 sm:px-6   mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
