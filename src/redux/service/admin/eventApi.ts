@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import baseApi from "@/redux/api/baseApi";
 
 /* ================= TYPES ================= */
@@ -9,6 +10,7 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
+// Your existing Event interface
 export interface Event {
   id: string;
   name: string;
@@ -37,8 +39,33 @@ export interface UpdateEventResponseData {
   updatedEvent: Event;
 }
 export type UpdateEventResponse = ApiResponse<UpdateEventResponseData>;
-
 export type DeleteEventResponse = ApiResponse<null>;
+
+/* ================= EVENT BOOKING TYPES ================= */
+
+// ✅ Request payload for booking
+export interface CreateEventBookingPayload {
+  eventId: string;
+  paymentMethod: string; // or "CARD" | "CASH" if you want to restrict
+  person: string; // or number if backend accepts number
+}
+
+// ✅ Payment response from backend
+export interface PaymentInfo {
+  type: string;
+  sessionId: string;
+  url: string;
+  amount: number;
+}
+
+// ✅ Booking response data
+export interface EventBookingData {
+  eventBookingId: string;
+  paymentId: string;
+  payment: PaymentInfo;
+}
+
+export type CreateEventBookingResponse = ApiResponse<EventBookingData>;
 
 /* ================= API ================= */
 
@@ -73,6 +100,19 @@ export const eventApi = baseApi.injectEndpoints({
       invalidatesTags: ["event"],
     }),
 
+    // ✅ CREATE EVENT BOOKING
+    createEventBooking: builder.mutation<
+      CreateEventBookingResponse,
+      CreateEventBookingPayload // ✅ Correct payload type
+    >({
+      query: (payload) => ({
+        url: "/event/booking/create-booking",
+        method: "POST",
+        body: payload, // ✅ Send as JSON (not FormData)
+      }),
+      invalidatesTags: ["event"],
+    }),
+
     // DELETE event
     deleteEvent: builder.mutation<DeleteEventResponse, string>({
       query: (id) => ({
@@ -92,4 +132,5 @@ export const {
   useCreateEventMutation,
   useUpdateEventMutation,
   useDeleteEventMutation,
+  useCreateEventBookingMutation, // ✅ Export the new hook
 } = eventApi;

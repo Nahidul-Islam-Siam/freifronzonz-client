@@ -1,5 +1,6 @@
 // components/cards/BlogCard.tsx
 import Image from "next/image";
+import Link from "next/link";
 
 interface BlogPost {
   id: string;
@@ -10,6 +11,9 @@ interface BlogPost {
   createdAt: string;
   admin: {
     name: string;
+  id: string;
+  photo: string;
+
   };
 }
 
@@ -28,7 +32,7 @@ export default function BlogCard({ post }: { post: BlogPost }) {
     : "/images/b1.png";
 
   return (
-    <div className="w-full max-w-full hover:bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
+    <Link href={`/blog/${post.id}`} className="w-full max-w-full hover:bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
       <div className="h-48 sm:h-56 w-full overflow-hidden">
         <Image
           width={400}
@@ -73,6 +77,6 @@ export default function BlogCard({ post }: { post: BlogPost }) {
           {post.des}
         </p>
       </div>
-    </div>
+    </Link>
   );
 }

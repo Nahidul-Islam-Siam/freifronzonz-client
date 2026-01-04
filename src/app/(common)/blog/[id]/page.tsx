@@ -1,37 +1,81 @@
-// components/BlogDetailsPage.jsx
+// components/BlogDetailsPage.tsx
 "use client";
+
+import { useGetBlogByIdQuery, useIncrementBlogViewsMutation } from "@/redux/service/admin/cmsApi";
 import Image from "next/image";
-import React from "react";
+import { useParams } from "next/navigation";
+import React, { useEffect } from "react";
 
 export default function BlogDetailsPage() {
-  // Mock blog data (replace with real data from API later)
-  const blog = {
-    id: 1,
-    title: "The Art of Wine Pairing: How to Elevate Every Meal",
-    author: "Martin Frank",
-    date: "1888", // In your example, this seems symbolic — you can replace with actual date
-    image: "/images/tradition.png", // Replace with your actual image path
-    excerpt:
-      "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s...",
-    content: [
-      "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-      "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of 'de Finibus Bonorum et Malorum' (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance.",
-      "The first line of Lorem Ipsum, 'Lorem ipsum dolor sit amet..', comes from a line in section 1.10.32. Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-      "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of 'de Finibus Bonorum et Malorum' (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance.",
-    ],
-  };
+  const { id } = useParams<{ id: string }>();
+
+  const { data: blogData, isLoading, isError } = useGetBlogByIdQuery(id);
+
+   const [incrementViews] = useIncrementBlogViewsMutation();
+
+  // ✅ Increment view count on every successful load
+  useEffect(() => {
+    if (blogData?.data?.id) {
+      incrementViews(blogData.data.id);
+    }
+  }, [blogData, incrementViews]);
+
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#AF6900] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading blog post...</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Show error state
+  if (isError || !blogData?.data) {
+    return (
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto text-center text-red-600">
+          <p>Failed to load blog post.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const blog = blogData.data;
+
+  // Format date: "2026-01-04T09:34:31.439Z" → "Jan 04, 2026"
+  // const formatDate = (isoDate: string) => {
+  //   return new Date(isoDate).toLocaleDateString("en-US", {
+  //     year: "numeric",
+  //     month: "short",
+  //     day: "numeric",
+  //   });
+  // };
+
+  // Split description into paragraphs (optional)
+  const paragraphs = blog.des.split("\n").filter((p) => p.trim());
 
   return (
     <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Hero Image */}
         <div className="relative w-full h-[300px] md:h-[400px] mb-8 rounded-lg overflow-hidden">
-          <Image
-            fill
-            src={blog.image}
-            alt={blog.title}
-            className="w-full h-full object-cover"
-          />
+          {blog.images && blog.images.length > 0 ? (
+            <Image
+              fill
+              src={blog.images[0]}
+              alt={blog.title}
+              className="w-full h-full object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400">No Image</span>
+            </div>
+          )}
         </div>
 
         {/* Article Header */}
@@ -40,7 +84,7 @@ export default function BlogDetailsPage() {
             {blog.title}
           </h1>
           <div className="flex items-center gap-4 text-sm md:text-base text-[#968F8F] font-normal">
-            <span className="items-center  flex gap-2">
+            <span className="items-center flex gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="11"
@@ -53,7 +97,8 @@ export default function BlogDetailsPage() {
                   fill="#968F8F"
                 />
               </svg>{" "}
-              {blog.author}
+              {/* Author name not available in detail API — use "Admin" or fetch separately if needed */}
+           {blog.admin.name}
             </span>
             <span className="">
               <svg
@@ -69,17 +114,14 @@ export default function BlogDetailsPage() {
                 />
               </svg>
             </span>
-            <span>{blog.date}</span>
+            <span>{(blog.views)}</span>
           </div>
         </div>
 
         {/* Article Body */}
         <div className="prose prose-lg max-w-none text-[#968F8F] font-normal leading-relaxed space-y-6">
-          {/* Excerpt */}
-          <p className="italic text-base md:text-lg">{blog.excerpt}</p>
-
           {/* Full Content */}
-          {blog.content.map((paragraph, index) => (
+          {paragraphs.map((paragraph, index) => (
             <p key={index} className="text-base md:text-lg">
               {paragraph}
             </p>

@@ -6,7 +6,7 @@ import baseApi from "@/redux/api/baseApi";
 export interface ApiResponse<T> {
   status: boolean;
   message: string;
-  data: T;
+   data:T;
   success?: boolean;
 }
 
@@ -18,18 +18,36 @@ export interface BlogAdmin {
   photo: string;
 }
 
-export interface Blog {
+// Reusable blog base (without admin object)
+export interface BlogBase {
   id: string;
   title: string;
   subTitle: string;
   des: string;
   images: string[];
   views: number;
-  active: boolean; // ← only in admin
   createdAt: string;
   updatedAt: string;
+}
+
+// Admin list item (has full admin object)
+export interface Blog extends BlogBase {
+  active: boolean;
   admin: BlogAdmin;
 }
+
+// Public list item (has full admin object)
+export interface PublicBlog extends BlogBase {
+  admin: BlogAdmin;
+}
+
+// ✅ Single blog detail (has adminId, not admin object)
+export interface BlogDetail extends BlogBase {
+  active: boolean;
+  admin:BlogAdmin
+}
+
+/* ================= LIST RESPONSES ================= */
 
 export interface BlogListData {
   total: number;
@@ -38,23 +56,7 @@ export interface BlogListData {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  blogs: Blog[];
-}
-
-export type GetBlogsResponse = ApiResponse<BlogListData>;
-
-/* ================= PUBLIC BLOG (without active) ================= */
-
-export interface PublicBlog {
-  id: string;
-  title: string;
-  subTitle: string;
-  des: string;
-  images: string[];
-  views: number;
-  createdAt: string;
-  updatedAt: string;
-  admin: BlogAdmin;
+  blogs: Blog[]; // admin list
 }
 
 export interface PublicBlogListData {
@@ -64,10 +66,14 @@ export interface PublicBlogListData {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  blogs: PublicBlog[];
+  blogs: PublicBlog[]; // public list
 }
 
+export type GetBlogsResponse = ApiResponse<BlogListData>;
 export type GetPublicBlogsResponse = ApiResponse<PublicBlogListData>;
+
+// ✅ Single blog response
+export type GetBlogDetailResponse = ApiResponse<BlogDetail>;
 
 /* ================= COMMON CMS ITEM (Hero / Story) ================= */
 
@@ -161,15 +167,29 @@ export const cmsApi = baseApi.injectEndpoints({
       invalidatesTags: ["cms"],
     }),
 
-    // 🔹 Blogs (Admin - WITH active)
+    // 🔹 Blogs (Admin - WITH active + admin object)
     getBlogByAdmin: builder.query<GetBlogsResponse, void>({
       query: () => "/blog/getAllByAdmin",
       providesTags: ["cms"],
     }),
+// 🔹 Increment blog views (PATCH /blog/viewCount/:id)
+incrementBlogViews: builder.mutation<void, string>({
+  query: (id) => ({
+    url: `/blog/viewCount/${id}`,
+    method: "PATCH",
+  }),
+  // invalidatesTags: ["cms"],
+}),
 
-    // 🔹 Blogs (Public - WITHOUT active)
+    // 🔹 Blogs (Public - WITHOUT active, WITH admin object)
     getBlog: builder.query<GetPublicBlogsResponse, void>({
       query: () => "/blog",
+      providesTags: ["cms"],
+    }),
+
+    // ✅ Blog Detail (Single) - WITH active, WITH adminId (not admin object)
+    getBlogById: builder.query<GetBlogDetailResponse, string>({
+      query: (id) => `/blog/${id}`,
       providesTags: ["cms"],
     }),
 
@@ -212,7 +232,9 @@ export const {
   useGetSocialLinksQuery,
   useUpdateSocialLinksMutation,
   useGetBlogByAdminQuery,
-  useGetBlogQuery, // ✅ Public blog hook
+  useGetBlogQuery,
+  useIncrementBlogViewsMutation,
+  useGetBlogByIdQuery, // ✅ Now correctly typed
   useCreateBlogMutation,
   useUpdateBlogMutation,
   useDeleteBlogMutation,

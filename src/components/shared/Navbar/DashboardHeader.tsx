@@ -80,7 +80,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         </Link>
 
         {/* Notification */}
-        <div className="relative">
+        {/* <div className="relative">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -104,7 +104,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
             />
           </svg>
           <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-        </div>
+        </div> */}
 
         {/* Profile */}
         <div className="relative">
