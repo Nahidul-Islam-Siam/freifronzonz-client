@@ -263,7 +263,7 @@ export default function ShopPage() {
                     }`}
                   >
                     <Image
-                      src="/images/brand-1.png"
+                      src={brand.img || "/images/brand-1.png"}
                       alt={brand.name}
                       width={100}
                       height={100}
@@ -356,7 +356,7 @@ export default function ShopPage() {
                           }`}
                         >
                           <Image
-                            src={"/images/brand-1.png"}
+                            src={brand.img || "/images/brand-1.png"}
                             alt={brand.name}
                             width={60}
                             height={60}
@@ -472,7 +472,7 @@ export default function ShopPage() {
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
                               >
                                 <Image
-                                  src={"/images/brand-placeholder.png"}
+                                  src={brand.img || "/images/brand-1.png"}
                                   alt={brand.name}
                                   width={20}
                                   height={20}
@@ -560,18 +560,22 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/* Product Grid */}
-            {productsData?.data?.products && productsData.data.products.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {productsData.data.products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">No products found matching your filters.</p>
-              </div>
-            )}
+  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[300px]">
+  {isLoading ? (
+    // Optional: show skeleton loaders
+    Array.from({ length: itemsPerPage }).map((_, i) => (
+      <div key={i} className="bg-gray-100 animate-pulse h-80 rounded-lg"></div>
+    ))
+  ) : productsData?.data?.products && productsData.data.products.length > 0 ? (
+    productsData.data.products.map((product) => (
+      <ProductCard key={product.id} product={product} />
+    ))
+  ) : (
+    <div className="col-span-full flex items-center justify-center">
+      <p className="text-gray-500 text-lg py-12">No products found matching your filters.</p>
+    </div>
+  )}
+</div>
 
             {/* Pagination */}
             {totalPages > 1 && (
