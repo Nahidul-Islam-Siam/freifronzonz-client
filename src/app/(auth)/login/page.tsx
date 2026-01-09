@@ -254,12 +254,12 @@ const handleSubmit = async (e: React.FormEvent) => {
               <Link href="#" className="text-xl text-gray-700 hover:text-red-500">
                 <FcGoogle />
               </Link>
-              <Link href="#" className="text-xl text-gray-700 hover:text-blue-600">
+              {/* <Link href="#" className="text-xl text-gray-700 hover:text-blue-600">
                 <FaFacebook />
               </Link>
               <Link href="#" className="text-xl text-gray-700 hover:text-pink-500">
                 <BsInstagram />
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>

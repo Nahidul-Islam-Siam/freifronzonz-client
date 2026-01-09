@@ -77,7 +77,7 @@ export default function BrandTable({ brands }: { brands: Brand[] }) {
       name: brand.name,
       des: brand.des || '',
     });
-    setPreviewUrl(brand.img ? `http://localhost:4200/${brand.img}` : null);
+    setPreviewUrl(brand.img || '');
     setLogoFile(null);
     setIsModalOpen(true);
   };
@@ -184,7 +184,18 @@ export default function BrandTable({ brands }: { brands: Brand[] }) {
       dataIndex: 'name',
       key: 'name',
       render: (_: any, record: Brand) => (
+        <div className="flex items-center space-x-2">
+        <span className="w-10 h-10 rounded-full flex items-center justify-center text-white  font-bold">
+          <Image 
+            width={100}
+            height={100}
+            src={record.img || ''}
+            alt={record.name}
+            className="w-10 h-10 rounded object-contain border"
+          />
+        </span>
         <span className="font-roboto text-gray-700">{record.name}</span>
+      </div>
       ),
     },
     {
@@ -283,7 +294,7 @@ export default function BrandTable({ brands }: { brands: Brand[] }) {
                     <Image 
                       width={100}
                       height={100}
-                      src={`http://localhost:4200/${selectedBrand.img}`} 
+                      src={selectedBrand.img || ''} 
                       alt="Current" 
                       className="w-16 h-16 rounded object-contain border"
                     />

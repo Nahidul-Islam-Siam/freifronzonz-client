@@ -143,14 +143,14 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <ul className="py-1 text-sm text-gray-700">
-                <li>
+                {/* <li>
                   <Link
                     href="/dashboard/settings"
                     className="block px-4 py-2 hover:bg-gray-100"
                   >
                     Settings
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <div
                     className="block px-4 py-2 text-red-600 hover:bg-red-50 font-medium cursor-pointer"
