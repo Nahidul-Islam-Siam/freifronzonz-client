@@ -134,11 +134,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Image
           width={400}
           height={400}
-          src={
-            product.images[0]
-              ? `http://localhost:4200/${product.images[0]}`
-              : "/placeholder.svg"
-          }
+          src={product.images[0]}
           alt={product.name}
           className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
         />
@@ -159,9 +155,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             <ShoppingCart className="w-5 h-5 text-[#482817]" />
           </button>
 
-          <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
+          {/* <button className="w-8 h-8 flex items-center justify-center border border-[#482817] hover:bg-gray-100">
             <Heart className="w-5 h-5 text-[#482817]" />
-          </button>
+          </button> */}
         </div>
       </div>
 

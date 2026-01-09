@@ -484,9 +484,8 @@ export default function AllProductList({
           <div className="space-y-6">
             <div className="flex justify-center">
               <Image
-                src={selectedProduct.images[0] 
-                  ? `http://localhost:4200/${selectedProduct.images[0]}`
-                  : "/placeholder.svg"
+                src={selectedProduct.images[0]  || "https://via.placeholder.com/128x128?text=No+Image"
+          
                 }
                 width={128}
                 height={128}
