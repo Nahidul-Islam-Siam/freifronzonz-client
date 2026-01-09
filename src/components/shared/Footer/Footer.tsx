@@ -97,27 +97,27 @@ const Footer = () => {
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <Link href="/contact" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Contact & FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/track-order" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Track Your Order
                 </Link>
               </li>
               <li>
-                <Link href="/returns" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link href="/shipping" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Shipping & Delivery
                 </Link>
               </li>
               <li>
-                <Link href="/finance" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Interest Free Finance
                 </Link>
               </li>
@@ -131,27 +131,27 @@ const Footer = () => {
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <Link href="/our-story" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Our story
                 </Link>
               </li>
               <li>
-                <Link href="/reviews" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Customer Review
                 </Link>
               </li>
               <li>
-                <Link href="/press" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Press
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
+                <Link href="/#" className="hover:text-gray-900 transition font-normal text-[#968F8F]">
                   Contact
                 </Link>
               </li>

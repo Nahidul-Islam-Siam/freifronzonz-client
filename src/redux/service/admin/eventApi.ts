@@ -16,10 +16,10 @@ export interface Event {
   name: string;
   des: string;
   images: string[];
-  price: string;
-  startDate: string;
-  endDate: string;
-  audienceSize: string;
+  price: string;        // string (not number) - API returns "200"
+  startDate: string;    // ISO date string "2026-01-02"
+  endDate: string;      // ISO date string "2026-01-10"
+  audienceSize: string; // string (not number) - API returns "100"
 }
 
 export interface EventListData {
@@ -29,8 +29,8 @@ export interface EventListData {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  products: Event[];
-} 
+  products: Event[]; // Note: API uses "products", not "events"
+}
 
 export type GetEventListResponse = ApiResponse<EventListData>;
 export type CreateEventResponse = ApiResponse<Event>;

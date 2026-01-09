@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useGetCategoryListQuery } from "@/redux/service/admin/categoryApi";
 import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
+import { useGetSizeListQuery } from "@/redux/service/admin/bottleSizeApi";
 import {
   useGetProductByIdQuery,
   useUpdateProductMutation,
@@ -34,22 +35,24 @@ export default function EditProductPage() {
   const { data: categoryData, isLoading: categoryLoading } =
     useGetCategoryListQuery();
   const { data: brandData, isLoading: brandLoading } = useGetBrandListQuery();
+  const { data: sizeData, isLoading: sizeLoading } = useGetSizeListQuery();
   const [updateProduct] = useUpdateProductMutation();
 
   const product = productData?.data;
   const categories = categoryData?.data?.category || [];
   const brands = brandData?.data?.brand || [];
+  const sizes = sizeData?.data?.sizes || [];
 
-  const isLoading = productLoading || categoryLoading || brandLoading;
+  const isLoading = productLoading || categoryLoading || brandLoading || sizeLoading;
 
-  // ✅ Initialize form with real API data
+  // ✅ Initialize form with real API data - including sizeId
   useEffect(() => {
     if (product) {
       form.setFieldsValue({
         productName: product.name,
         shortDescription: product.shortDes,
         description: product.des,
-        bottleSize: product.size,
+        bottleSize: product.sizeId, // ✅ Use sizeId (not Size.name)
         price: product.price,
         offer: product.discount ? product.discountPercent : "",
         stockStatus: product.stock ? "inStock" : "outOfStock",
@@ -97,20 +100,15 @@ export default function EditProductPage() {
       return;
     }
 
-    // if (productImageFiles.length === 0 && previewUrls.length === 0) {
-    //   message.error("Please upload at least one product image");
-    //   return;
-    // }
-
     setIsSubmitting(true);
 
     try {
-      // ✅ Build the data payload exactly as your backend expects
+      // ✅ Build the data payload correctly - use sizeId, not Size
       const dataPayload = {
         name: values.productName,
         shortDes: values.shortDescription,
         des: values.description,
-        size: values.bottleSize,
+        sizeId: values.bottleSize, // ✅ This is the correct field name
         price: values.price,
         discount: values.offer ? values.offer.trim() !== "" : false,
         discountPercent: values.offer || "0",
@@ -118,19 +116,17 @@ export default function EditProductPage() {
         quantity: values.totalProduct,
         categoryId: values.category,
         brandId: values.brandName,
-        tag: values.tag || "", // ✅ Changed from null to empty string
+        tag: values.tag || "",
       };
 
-      // ✅ Create FormData with data as JSON string
       const formData = new FormData();
       formData.append("data", JSON.stringify(dataPayload));
 
-      // ✅ Append new images (if any)
+      // Append new images (if any)
       for (let i = 0; i < productImageFiles.length; i++) {
         formData.append("images", productImageFiles[i]);
       }
 
-      // ✅ Call the actual update mutation
       const result = await updateProduct({ id: productId, formData }).unwrap();
 
       if (result.status === true) {
@@ -226,8 +222,8 @@ export default function EditProductPage() {
           />
         </Form.Item>
 
-        {/* Brand Name + Category */}
-        <div className="grid grid-cols-2 gap-6">
+        {/* Brand Name + Category + Size */}
+        <div className="grid grid-cols-3 gap-6">
           <Form.Item
             label={
               <span className="text-[#A7997D] font-medium">
@@ -271,20 +267,33 @@ export default function EditProductPage() {
               ))}
             </Select>
           </Form.Item>
-        </div>
 
-        {/* Bottle Size + Tag + Offer + Price + Total Product */}
-        <div className="grid grid-cols-5 gap-4">
+          {/* ✅ Size Dropdown - properly mapped to sizeId */}
           <Form.Item
             label={
-              <span className="text-[#A7997D] font-medium">Bottle Size *</span>
+              <span className="text-[#A7997D] font-medium">
+                Select Bottle Size *
+              </span>
             }
             name="bottleSize"
-            rules={[{ required: true, message: "Please enter bottle size" }]}
+            rules={[{ required: true, message: "Please select bottle size" }]}
           >
-            <Input placeholder="500 ml" />
+            <Select
+              placeholder="Select Size"
+              className="rounded-[8px] border border-[#D9D9D9] bg-white"
+              loading={!sizeData}
+            >
+              {sizes.map((size) => (
+                <Option key={size.id} value={size.id}>
+                  {size.name}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
+        </div>
 
+        {/* Tag + Offer + Price + Total Product */}
+        <div className="grid grid-cols-4 gap-4">
           <Form.Item
             label={
               <span className="text-gray-600 font-medium">Tag (Optional)</span>

@@ -83,9 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     const cartProduct = {
       id: product.id,
       name: product.name,
-      image: product.images[0]
-        ? `http://localhost:4200/${product.images[0]}`
-        : "/placeholder.svg",
+      image: product.images[0],
       price: parseFloat(formatPrice(product.price)),
       originalPrice: getOriginalPrice()
         ? getOriginalPrice()!

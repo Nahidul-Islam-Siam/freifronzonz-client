@@ -1,40 +1,42 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// components/EventList.tsx
 'use client';
 import React, { useState } from "react";
 import Image from "next/image";
 import { useCreateEventBookingMutation } from "@/redux/service/admin/eventApi";
+import { Event } from "@/redux/service/admin/eventApi"; // ✅ Import Event type
 import Swal from "sweetalert2";
 
-export default function EventList({ events = [], searchTerm = '' }) {
+interface EventListProps {
+  events: Event[]; // ✅ Proper type instead of any
+  searchTerm: string;
+}
+
+export default function EventList({ events, searchTerm }: EventListProps) {
   const [createBooking] = useCreateEventBookingMutation();
   
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null); // ✅ Typed
   const [personCount, setPersonCount] = useState("1");
   const [isBooking, setIsBooking] = useState(false);
 
-  // ✅ Safe filtering
   const filteredEvents = events.filter(event =>
-    (event?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (event?.des?.toLowerCase().includes(searchTerm.toLowerCase()))
+    event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.des.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Open modal with selected event
-  const openBookingModal = (event) => {
+  const openBookingModal = (event: Event) => { // ✅ Typed parameter
     setSelectedEvent(event);
     setPersonCount("1");
     setIsModalOpen(true);
   };
 
-  // Close modal
   const closeBookingModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
     setPersonCount("1");
   };
 
-  // Handle booking submission
   const handleBookingSubmit = async () => {
     if (!selectedEvent || !personCount || parseInt(personCount) <= 0) {
       Swal.fire("Warning", "Please enter a valid number of persons.", "warning");
@@ -44,7 +46,7 @@ export default function EventList({ events = [], searchTerm = '' }) {
     setIsBooking(true);
     const payload = {
       eventId: selectedEvent.id,
-      paymentMethod: "CARD", // Default as requested
+      paymentMethod: "CARD" as const, // ✅ Type assertion for literal type
       person: personCount,
     };
 
@@ -53,16 +55,12 @@ export default function EventList({ events = [], searchTerm = '' }) {
       
       if (response.status === true) {
         Swal.fire("Success", response.message, "success");
-        // Redirect to Stripe payment URL
-        window.location.href = response.data.payment.url;
+ window.open(response.data.payment.url, "_blank");
+        closeBookingModal();
       } else {
-        Swal.fire(
-          "Error",
-          response.message || "Failed to create booking. Please try again.",
-          "error"
-        );
+        Swal.fire("Error", response.message || "Failed to create booking.", "error");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Booking error:", err);
       Swal.fire(
         "Booking Failed",
@@ -81,10 +79,8 @@ export default function EventList({ events = [], searchTerm = '' }) {
           key={event.id}
           className="flex flex-col sm:flex-row gap-6 p-6 border border-[#000000] rounded-[18px] shadow-sm hover:shadow-md transition-shadow"
         >
-          {/* Left Content */}
           <div className="sm:w-1/2 flex justify-between flex-col">
             <div>
-              {/* Date */}
               <div className="md:text-xl text-lg font-normal text-[#9E845C]">
                 {new Date(event.startDate).toLocaleDateString('en-US', { 
                   month: 'short', 
@@ -98,23 +94,19 @@ export default function EventList({ events = [], searchTerm = '' }) {
                 })}
               </div>
 
-              {/* Title */}
               <h3 className="text-2xl md:text-3xl font-abhaya font-extrabold text-[#000000] mt-2">
                 {event.name}
               </h3>
 
-              {/* Audience */}
               <div className="flex items-center gap-2 text-xs md:text-base text-[#968F8F] font-normal mt-2">
                 Audience size: {event.audienceSize}
               </div>
 
-              {/* Description */}
               <p className="text-sm md:text-base text-[#968F8F] font-medium line-clamp-3 mt-3">
                 {event.des}
               </p>
             </div>
 
-            {/* Price & Button */}
             <div className="flex items-center gap-4 mt-6">
               <span className="text-2xl md:text-3xl font-extrabold font-abhaya text-[#AF6900]">
                 ${event.price}
@@ -132,7 +124,6 @@ export default function EventList({ events = [], searchTerm = '' }) {
             </div>
           </div>
 
-          {/* Right Image */}
           <div className="sm:w-1/2 relative aspect-video rounded-lg overflow-hidden">
             {event.images && event.images.length > 0 ? (
               <Image
@@ -151,12 +142,10 @@ export default function EventList({ events = [], searchTerm = '' }) {
         </div>
       ))}
 
-      {/* Empty State */}
       {filteredEvents.length === 0 && (
         <p className="text-center text-gray-500 py-12">No events found</p>
       )}
 
-      {/* ✅ BOOKING MODAL */}
       {isModalOpen && selectedEvent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-md">
@@ -178,7 +167,6 @@ export default function EventList({ events = [], searchTerm = '' }) {
                 </p>
               </div>
 
-              {/* Person Count Input */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Number of Persons *
@@ -186,7 +174,7 @@ export default function EventList({ events = [], searchTerm = '' }) {
                 <input
                   type="number"
                   min="1"
-                  max={selectedEvent.audienceSize}
+                  max={parseInt(selectedEvent.audienceSize)}
                   value={personCount}
                   onChange={(e) => setPersonCount(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#AF6900] focus:outline-none"
@@ -197,7 +185,6 @@ export default function EventList({ events = [], searchTerm = '' }) {
                 </p>
               </div>
 
-              {/* Total Amount */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex justify-between">
                   <span>Price per person:</span>
@@ -215,7 +202,6 @@ export default function EventList({ events = [], searchTerm = '' }) {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={closeBookingModal}

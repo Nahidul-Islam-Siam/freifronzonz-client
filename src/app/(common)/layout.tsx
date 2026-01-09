@@ -1,6 +1,6 @@
 import Footer from "@/components/shared/Footer/Footer";
 import Navbar from "@/components/shared/Navbar/Navbar";
-import ScrollToTopButton from "@/components/ui/ScrollToTopButton/ScrollToTopButton";
+// import ScrollToTopButton from "@/components/ui/ScrollToTopButton/ScrollToTopButton";
 import { NextUiProvider } from "@/lib/providers/NextUIProvider";
 import ReduxProvider from "@/redux/ReduxProvider";
 import type { Metadata } from "next";
@@ -29,7 +29,7 @@ export default function RootLayout({
 
               <Footer />
             </div>
-            <ScrollToTopButton />
+            {/* <ScrollToTopButton /> */}
             <Toaster />
           </>
         </ReduxProvider>

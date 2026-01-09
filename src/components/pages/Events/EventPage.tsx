@@ -1,8 +1,9 @@
+// components/EventPage.tsx
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import React, { useState, useMemo } from 'react';
-import { useGetEventListQuery } from '@/redux/service/admin/eventApi';
+import { useGetEventListQuery, Event } from '@/redux/service/admin/eventApi';
 import EventList from './EventList';
 
 export default function EventPage() {
@@ -12,15 +13,23 @@ export default function EventPage() {
 
   const today = new Date();
 
+  // ✅ Properly typed arrays
   const { recentEvents, upcomingEvents, showTabs } = useMemo(() => {
     const allEvents = events?.data?.products || [];
 
-    const recent = [];
-    const upcoming = [];
+    const recent: Event[] = [];
+    const upcoming: Event[] = [];
 
     allEvents.forEach((event) => {
+      // Handle date parsing safely
       const start = new Date(event.startDate);
       const end = new Date(event.endDate);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        // Skip invalid dates
+        upcoming.push(event);
+        return;
+      }
 
       if (end < today) {
         recent.push(event);
@@ -29,7 +38,6 @@ export default function EventPage() {
       }
     });
 
-    // ✅ Show tabs only if BOTH recent and upcoming events exist
     const shouldShowTabs = recent.length > 0 && upcoming.length > 0;
 
     return { 
@@ -39,17 +47,11 @@ export default function EventPage() {
     };
   }, [events]);
 
-  // ✅ Auto-determine which events to show
   const currentView = useMemo(() => {
-    if (showTabs) {
-      // If tabs are visible, default to 'upcoming'
-      return 'upcoming';
-    } else if (upcomingEvents.length > 0) {
-      return 'upcoming';
-    } else {
-      return 'recent';
-    }
-  }, [showTabs, upcomingEvents, recentEvents]);
+    if (showTabs) return 'upcoming';
+    if (upcomingEvents.length > 0) return 'upcoming';
+    return 'recent';
+  }, [showTabs, upcomingEvents.length, recentEvents.length]);
 
   const eventsToDisplay = currentView === 'upcoming' ? upcomingEvents : recentEvents;
 
@@ -60,7 +62,6 @@ export default function EventPage() {
   return (
     <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">
             <input
@@ -76,20 +77,18 @@ export default function EventPage() {
           </div>
         </div>
 
-        {/* Conditionally Render Tabs */}
         {showTabs && (
           <div className="mb-8">
             <div className="flex space-x-2">
               {['recent', 'upcoming'].map((tab) => (
                 <button
                   key={tab}
-                  // For now, we auto-show upcoming, but you can add state if needed later
                   className={`px-6 py-3 rounded-lg ${
                     currentView === tab
                       ? 'bg-[#AF6900] text-white'
                       : 'border border-[#AF6900] text-[#AF6900]'
                   }`}
-                  disabled // Tabs are for display only since we auto-select
+                  disabled
                 >
                   {tab === 'recent' ? 'Recent' : 'Upcoming'}
                 </button>
@@ -98,7 +97,6 @@ export default function EventPage() {
           </div>
         )}
 
-        {/* Heading */}
         <h2 className="text-3xl md:text-4xl font-extrabold text-center my-8">
           {upcomingEvents.length > 0 && recentEvents.length === 0 
             ? 'Upcoming Events' 
@@ -107,7 +105,6 @@ export default function EventPage() {
               : 'Events'}
         </h2>
 
-        {/* Event List */}
         <EventList 
           events={eventsToDisplay} 
           searchTerm={searchTerm} 

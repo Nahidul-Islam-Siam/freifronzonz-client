@@ -10,16 +10,15 @@ interface BlogPost {
   views: number;
   createdAt: string;
   admin: {
+    id: string;
     name: string;
-  id: string;
-  photo: string;
-
+    photo: string;
   };
 }
 
 export default function BlogCard({ post }: { post: BlogPost }) {
   const formatDate = (isoDate: string) => {
-    const date: Date = new Date(isoDate);
+    const date = new Date(isoDate);
     return {
       day: date.getDate(),
       month: date.toLocaleString("en-US", { month: "short" }),
@@ -27,45 +26,71 @@ export default function BlogCard({ post }: { post: BlogPost }) {
   };
 
   const { day, month } = formatDate(post.createdAt);
-  const imageSrc = post.images && post.images.length > 0 
-    ? post.images[0] 
-    : "/images/b1.png";
+
+  const imageSrc =
+    post.images && post.images.length > 0
+      ? post.images[0]
+      : "/images/b1.png";
 
   return (
-    <Link href={`/blog/${post.id}`} className="w-full max-w-full hover:bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
-      <div className="h-48 sm:h-56 w-full overflow-hidden">
+    <Link
+      href={`/blog/${post.id}`}
+      className="w-full h-[420px] flex flex-col rounded-lg overflow-hidden hover:bg-white hover:shadow-lg transition-shadow"
+    >
+      {/* Image */}
+      <div className="relative w-full aspect-[16/9] overflow-hidden">
         <Image
-          width={400}
-          height={400}
           src={imageSrc}
           alt={post.title}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 33vw"
         />
       </div>
+
+      {/* Content */}
       <div className="p-4 sm:p-5 flex flex-col flex-grow">
-        {/* ✅ Flex container with responsive wrap */}
-        <div className="flex items-start gap-3 mb-3 border-b border-gray-50">
-          {/* ✅ Date badge: responsive width */}
-          <div className="bg-[#AF6900] text-white px-2.5 py-2 text-center flex-shrink-0">
-            <span className="block text-base font-bold">{day}</span>
-            <span className="block text-[10px] font-medium">{month}</span>
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-3 border-b border-gray-100 pb-3">
+          {/* Date badge */}
+          <div className="bg-[#AF6900] text-white px-3 py-2 text-center flex-shrink-0 rounded">
+            <span className="block text-base font-bold leading-none">
+              {day}
+            </span>
+            <span className="block text-[10px] font-medium uppercase">
+              {month}
+            </span>
           </div>
 
-          {/* ✅ Content: allows wrapping and limits overflow */}
-          <div className="min-w-0 flex-1"> {/* ← critical for text truncation */}
-            <h3 className="text-sm md:text-base font-medium text-[#444444] mb-3 line-clamp-2 break-words">
+          {/* Title + Meta */}
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm md:text-base font-medium text-[#444444] mb-2 line-clamp-2 break-words">
               {post.title}
             </h3>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] sm:text-xs text-gray-500">
-              <span className="flex items-center gap-1 text-[#968F8F]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="12" viewBox="0 0 11 14" fill="none">
-                  {/* your icon path */}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] sm:text-xs text-[#968F8F]">
+              <span className="flex items-center gap-1 truncate">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="10"
+                  height="12"
+                  viewBox="0 0 11 14"
+                  fill="currentColor"
+                >
+                  <path d="M5.5 7a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 1.4c-2.4 0-5.5 1.2-5.5 3.5V14h11v-2.1c0-2.3-3.1-3.5-5.5-3.5Z" />
                 </svg>
-                <span className="truncate">{post.admin.name}</span>
+                {post.admin.name}
               </span>
-              <span className="flex items-center gap-1 text-[#968F8F]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  {/* your icon path */}
+
+              <span className="flex items-center gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 14 14"
+                  fill="currentColor"
+                >
+                  <path d="M7 2C3.5 2 1 7 1 7s2.5 5 6 5 6-5 6-5-2.5-5-6-5Zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
                 </svg>
                 {post.views} views
               </span>
@@ -73,6 +98,7 @@ export default function BlogCard({ post }: { post: BlogPost }) {
           </div>
         </div>
 
+        {/* Description */}
         <p className="text-sm text-[#1E1E21] leading-relaxed line-clamp-3 mt-auto break-words">
           {post.des}
         </p>

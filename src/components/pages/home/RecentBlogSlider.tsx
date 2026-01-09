@@ -42,7 +42,7 @@ export default function RecentBlogSlider() {
 
   return (
     <section className="py-10 px-4 sm:px-6 lg:px-8 grid grid-cols-1">
-      <div className="max-w-7xl mx-auto">
+      <div className="container mx-auto grid grid-cols-1">
         <h1 className="text-4xl font-extrabold font-abhaya text-center text-[#6D0E0B] md:text-[48px] mb-8">
           Recent Blog
         </h1>

@@ -11,6 +11,7 @@ import { useGetBrandListQuery } from "@/redux/service/admin/brandApi";
 import Swal from "sweetalert2";
 import { useCreateProductMutation } from "@/redux/service/admin/productApi"; // ✅ Add this import
 import { useRouter } from "next/navigation";
+import { useGetSizeListQuery } from "@/redux/service/admin/bottleSizeApi";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -27,9 +28,11 @@ export default function AddProductPage() {
 
   const { data: categoryData } = useGetCategoryListQuery();
   const { data: brandData } = useGetBrandListQuery();
+  const {data:sizeData} = useGetSizeListQuery();
 
   const category = categoryData?.data.category || [];
   const brand = brandData?.data.brand || [];
+  const size = sizeData?.data.sizes || [];
 
   const handleProductImageChange = ({ fileList }: any) => {
     const files = fileList
@@ -70,7 +73,7 @@ export default function AddProductPage() {
         name: values.productName,
         shortDes: values.shortDescription, // ✅ Added short description
         des: values.description,
-        size: values.bottleSize,
+        sizeId: values.bottleSize,
         price: values.price,
         discount: values.offer ? values.offer.trim() !== "" : false,
         discountPercent: values.offer || "0",
@@ -221,12 +224,23 @@ export default function AddProductPage() {
         <div className="grid grid-cols-5 gap-4">
           <Form.Item
             label={
-              <span className="text-[#A7997D] font-medium">Bottle Size *</span>
+              <span className="text-[#A7997D] font-medium">
+                Select Bottle Size 
+              </span>
             }
             name="bottleSize"
-            rules={[{ required: true, message: "Please enter bottle size" }]}
+            rules={[{ required: true, message: "Please Select Bottle Size" }]}
           >
-            <Input placeholder="500 ml" />
+            <Select
+              placeholder="500ml..."
+              className="rounded-[8px] border border-[#D9D9D9] bg-white"
+            >
+              {size.map((cat) => (
+                <Option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item

@@ -1,5 +1,7 @@
-// components/ContactPage.jsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// components/ContactPage.tsx
 "use client";
+import { useCreateContactMutation } from "@/redux/service/auth/customer/contactApi";
 import { useState } from "react";
 
 export default function Contact() {
@@ -15,28 +17,34 @@ export default function Contact() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  const [createContact] = useCreateContactMutation();
+
   // Handle input changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitError("");
     setSubmitSuccess(false);
 
     try {
-      // Simulate API call (replace with real fetch later)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Success!
-      setFormData({ name: "", email: "", phone: "", message: "" });
-      setSubmitSuccess(true);
-    } catch {
-      setSubmitError("Something went wrong. Please try again.");
+      // ✅ Call real API
+      const response = await createContact(formData).unwrap();
+      
+      if (response.status) {
+        setFormData({ name: "", email: "", phone: "", message: "" });
+        setSubmitSuccess(true);
+      } else {
+        setSubmitError(response.message || "Failed to send message. Please try again.");
+      }
+    } catch (error: any) {
+      const message = error?.data?.message || error?.message || "Something went wrong. Please try again.";
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -202,7 +210,7 @@ export default function Contact() {
                 value={formData.message}
                 onChange={handleChange}
                 placeholder="Your Message"
-                rows="6"
+                rows={Number( 6)} // Convert the string to a number, default to 6 if the value is not a number
                 className="w-full px-4 py-3 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#AF6900] focus:border-transparent resize-none"
                 required
               />
