@@ -64,7 +64,7 @@ export default function EventCartItemsList({ carts }: CartItemsListProps) {
           >
             <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
               <Image
-                src={product.images?.[0] ? `http://localhost:4200/${product.images[0]}` : "/placeholder.svg"}
+                src={product.images?.[0] ||  "/placeholder.svg"}
                 alt={product.name}
                 width={128}
                 height={128}
