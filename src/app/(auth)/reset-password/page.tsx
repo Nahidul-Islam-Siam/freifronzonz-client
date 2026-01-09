@@ -49,8 +49,8 @@ const ResetPasswordPage = () => {
                   d="M15.75 18.75L9 12L15.75 5.25"
                   stroke="#313131"
                   stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
               Back to login
