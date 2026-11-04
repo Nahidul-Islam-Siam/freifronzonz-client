@@ -52,3 +52,4 @@ debug_api.json
 *.orc
 public/fonts/fa-solid-700.otf
 public/fonts/fa-*
+.gitignore
